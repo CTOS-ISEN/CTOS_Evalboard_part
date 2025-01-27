@@ -33,6 +33,9 @@ extern "C" {
 /* USER CODE BEGIN Includes */
 #include "ToF_library.h"
 #include "MEMS_library.h"
+#include "SD_library.h"
+#include "custom_ranging_sensor.h"
+#include "Config.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

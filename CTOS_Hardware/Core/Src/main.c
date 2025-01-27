@@ -26,13 +26,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "logger.h"
-#include <stdarg.h>
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 typedef StaticQueue_t osStaticMessageQDef_t;
 /* USER CODE BEGIN PTD */
-
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -197,14 +196,57 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   log_init(&huart1);
-  ToF_init();
-  MyInitLSM6DSO();
-  MyInitLIS2MDL();
-  MyEnableLSM6DSO();
-  MyEnableLIS2MDL();
+  //ToF_init();
+  //MyInitLSM6DSO();
+ // MyInitLIS2MDL();
+  //MyEnableLSM6DSO();
+  //MyEnableLIS2MDL();
 
       HAL_TIM_Base_Start_IT(&htim16);
       HAL_TIM_Base_Start_IT(&htim2);
+
+      mesure example_mesure = {
+          .distance = {
+              .NumberOfZones = 1,
+              .ZoneResult = {
+                  {
+                      .NumberOfTargets = 2,
+                      .Distance = {100, 200},
+                      .Status = {0, 1},
+                      .Ambient = {0.5, 0.6},
+                      .Signal = {1.2, 1.3}
+                  }
+              }
+          },
+          .posX = 1.0,
+          .posY = 2.0,
+          .posZ = 3.0,
+          .vX = 0.1,
+          .vY = 0.2,
+          .vZ = 0.3
+      };
+
+      mesure mesure_recup = {
+          .distance = {
+              .NumberOfZones = 0,
+              .ZoneResult = {{0}}
+          },
+          .posX = 0.0,
+          .posY = 0.0,
+          .posZ = 0.0,
+          .vX = 0.0,
+          .vY = 0.0,
+          .vZ = 0.0
+      };
+
+      mesure* mesure_recup_ptr = &mesure_recup;
+
+      mesure* example_mesure_ptr = &example_mesure;
+
+      SD_mount();
+      SD_write_data("mesure.txt", example_mesure_ptr);
+      SD_read_data("mesure.txt", mesure_recup_ptr);
+      SD_demount();
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -809,6 +851,7 @@ void Error_Handler(void)
   __disable_irq();
   while (1)
   {
+	  __BKPT();
   }
   /* USER CODE END Error_Handler_Debug */
 }

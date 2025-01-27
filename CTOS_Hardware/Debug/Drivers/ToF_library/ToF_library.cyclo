@@ -1,5 +1,0 @@
-../Drivers/ToF_library/ToF_library.c:16:6:ToF_init	6
-../Drivers/ToF_library/ToF_library.c:84:6:ToF_acquire_data	2
-../Drivers/ToF_library/ToF_library.c:93:6:print_result	5
-../Drivers/ToF_library/ToF_library.c:124:6:logger_print_result	5
-../Drivers/ToF_library/ToF_library.c:155:16:decimal_part	1
