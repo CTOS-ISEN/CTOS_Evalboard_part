@@ -43,8 +43,8 @@ void SD_status(void) {
 }
 
 void SD_write_data(const char* file_name, mesure* data) {
-    // Open file for writing
-    fres = f_open(&fil, file_name, FA_WRITE | FA_CREATE_ALWAYS);
+    // Open file for appending
+    fres = f_open(&fil, file_name, FA_WRITE | FA_OPEN_APPEND);
     if (fres != FR_OK) {
         printf("f_open error (%i)\r\n", fres);
         Error_Handler();
@@ -105,8 +105,8 @@ void SD_write_data(const char* file_name, mesure* data) {
 
 
 
-void SD_read_data(const char* file_name, mesure* data) {
-    // Open file for reading
+void SD_read_data(const char* file_name, mesure* data, uint32_t measure_index) {
+    // Ouvrir le fichier en lecture
     fres = f_open(&fil, file_name, FA_READ);
     if (fres != FR_OK) {
         printf("f_open error (%i)\r\n", fres);
@@ -116,10 +116,61 @@ void SD_read_data(const char* file_name, mesure* data) {
 
     printf("Opened '%s' for reading.\r\n", file_name);
 
-    // Create a buffer to store the file content
+    // Créer un buffer pour stocker le contenu du fichier
     char buffer[1024];
     UINT bytesRead;
-    fres = f_read(&fil, buffer, sizeof(buffer) - 1, &bytesRead);
+    uint32_t current_index = 0;
+
+    // Lire le fichier en morceaux et trouver la mesure spécifiée
+    while ((fres = f_read(&fil, buffer, sizeof(buffer) - 1, &bytesRead)) == FR_OK && bytesRead > 0) {
+        buffer[bytesRead] = '\0'; // Terminer la chaîne avec un caractère nul
+        printf("Read %u bytes from file.\n", bytesRead);
+
+        char* ptr = buffer;
+        while ((ptr = strstr(ptr, "NumberOfZones:")) != NULL) {
+            printf("Found 'NumberOfZones:' at index %lu.\n", current_index);
+            if (current_index == measure_index) {
+                // Analyser le contenu
+                sscanf(ptr, "NumberOfZones: %lu\n", &data->distance.NumberOfZones);
+                //printf("NumberOfZones: %lu\n", data->distance.NumberOfZones);
+
+                ptr = strstr(ptr, "  Zone");
+                for (uint32_t zone = 0; zone < data->distance.NumberOfZones && ptr; zone++) {
+                    RANGING_SENSOR_ZoneResult_t* zoneResult = &data->distance.ZoneResult[zone];
+                    sscanf(ptr, "  Zone %*u:\n    NumberOfTargets: %lu\n", &zoneResult->NumberOfTargets);
+                    //printf("  Zone %lu: NumberOfTargets: %lu\n", zone, zoneResult->NumberOfTargets);
+
+                    for (uint32_t target = 0; target < zoneResult->NumberOfTargets; target++) {
+                        ptr = strstr(ptr, "      Target");
+                        if (!ptr) break;
+                        sscanf(ptr, "      Target %*u:\n        Distance: %lu mm\n        Status: %lu\n        Ambient: %f kcps/spad\n        Signal: %f kcps/spad\n",
+                               &zoneResult->Distance[target],
+                               &zoneResult->Status[target],
+                               &zoneResult->Ambient[target],
+                               &zoneResult->Signal[target]);
+                        //printf("      Target %lu: Distance: %lu mm, Status: %lu, Ambient: %.2f kcps/spad, Signal: %.2f kcps/spad\n",
+                               //target, zoneResult->Distance[target], zoneResult->Status[target], zoneResult->Ambient[target], zoneResult->Signal[target]);
+                    }
+                    ptr = strstr(ptr, "  Zone");
+                }
+
+                // Analyser la position et la vitesse
+                sscanf(ptr, "%*[^P]Position:\n  X: %f\n  Y: %f\n  Z: %f\n", &data->posX, &data->posY, &data->posZ);
+                sscanf(ptr, "%*[^V]Velocity:\n  X: %f\n  Y: %f\n  Z: %f\n", &data->vX, &data->vY, &data->vZ);
+                //printf("Position: X: %.2f, Y: %.2f, Z: %.2f\n", data->posX, data->posY, data->posZ);
+                //printf("Velocity: X: %.2f, Y: %.2f, Z: %.2f\n", data->vX, data->vY, data->vZ);
+
+                printf("Read data from '%s'.\r\n", file_name);
+
+                // Fermer le fichier
+                f_close(&fil);
+                return;
+            }
+            current_index++;
+            ptr += strlen("NumberOfZones:");
+        }
+    }
+
     if (fres != FR_OK) {
         printf("f_read error (%i)\r\n", fres);
         f_close(&fil);
@@ -127,36 +178,51 @@ void SD_read_data(const char* file_name, mesure* data) {
         return;
     }
 
-    buffer[bytesRead] = '\0'; // Null-terminate the string
+    printf("Measure index %lu out of range.\r\n", measure_index);
+    f_close(&fil);
+}
 
-    // Parse the content
-    sscanf(buffer, "NumberOfZones: %lu\n", &data->distance.NumberOfZones);
 
-    char* ptr = strstr(buffer, "  Zone");
-    for (uint32_t zone = 0; zone < data->distance.NumberOfZones && ptr; zone++) {
-        RANGING_SENSOR_ZoneResult_t* zoneResult = &data->distance.ZoneResult[zone];
-        sscanf(ptr, "  Zone %*u:\n    NumberOfTargets: %lu\n", &zoneResult->NumberOfTargets);
-
-        for (uint32_t target = 0; target < zoneResult->NumberOfTargets; target++) {
-            ptr = strstr(ptr, "      Target");
-            if (!ptr) break;
-            sscanf(ptr, "      Target %*u:\n        Distance: %lu mm\n        Status: %lu\n        Ambient: %f kcps/spad\n        Signal: %f kcps/spad\n",
-                   &zoneResult->Distance[target],
-                   &zoneResult->Status[target],
-                   &zoneResult->Ambient[target],
-                   &zoneResult->Signal[target]);
-        }
-        ptr = strstr(ptr, "  Zone");
+uint32_t SD_count_measures(const char* file_name) {
+    // Ouvrir le fichier en lecture
+    fres = f_open(&fil, file_name, FA_READ);
+    if (fres != FR_OK) {
+        printf("f_open error (%i)\r\n", fres);
+        Error_Handler();
+        return 0;
     }
 
-    // Parse position and velocity
-    sscanf(buffer, "%*[^P]Position:\n  X: %f\n  Y: %f\n  Z: %f\n", &data->posX, &data->posY, &data->posZ);
-    sscanf(buffer, "%*[^V]Velocity:\n  X: %f\n  Y: %f\n  Z: %f\n", &data->vX, &data->vY, &data->vZ);
+    printf("Opened '%s' for reading.\r\n", file_name);
 
-    printf("Read data from '%s'.\r\n", file_name);
+    // Créer un buffer pour stocker le contenu du fichier
+    char buffer[1024];
+    UINT bytesRead;
+    uint32_t count = 0;
 
-    // Close the file
+    // Lire le fichier en morceaux et compter les occurrences de "NumberOfZones:"
+    while ((fres = f_read(&fil, buffer, sizeof(buffer) - 1, &bytesRead)) == FR_OK && bytesRead > 0) {
+        buffer[bytesRead] = '\0'; // Terminer la chaîne avec un caractère nul
+
+        char* ptr = buffer;
+        while ((ptr = strstr(ptr, "NumberOfZones:")) != NULL) {
+            count++;
+            ptr += strlen("NumberOfZones:");
+        }
+    }
+
+    if (fres != FR_OK) {
+        printf("f_read error (%i)\r\n", fres);
+        f_close(&fil);
+        Error_Handler();
+        return 0;
+    }
+
+    printf("Number of measures in '%s': %lu\n", file_name, count);
+
+    // Fermer le fichier
     f_close(&fil);
+
+    return count;
 }
 
 void SD_demount(void) {

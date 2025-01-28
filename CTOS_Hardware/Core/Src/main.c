@@ -211,19 +211,19 @@ int main(void)
               .ZoneResult = {
                   {
                       .NumberOfTargets = 2,
-                      .Distance = {100, 200},
+                      .Distance = {300, 500},
                       .Status = {0, 1},
                       .Ambient = {0.5, 0.6},
                       .Signal = {1.2, 1.3}
                   }
               }
           },
-          .posX = 1.0,
-          .posY = 2.0,
-          .posZ = 3.0,
-          .vX = 0.1,
-          .vY = 0.2,
-          .vZ = 0.3
+          .posX = 4.0,
+          .posY = 5.0,
+          .posZ = 6.0,
+          .vX = 0.5,
+          .vY = 0.9,
+          .vZ = 0.7
       };
 
       mesure mesure_recup = {
@@ -244,8 +244,31 @@ int main(void)
       mesure* example_mesure_ptr = &example_mesure;
 
       SD_mount();
-      SD_write_data("mesure.txt", example_mesure_ptr);
-      SD_read_data("mesure.txt", mesure_recup_ptr);
+      //SD_write_data("mesure.txt", example_mesure_ptr);
+      uint32_t num_measures = SD_count_measures("mesure.txt");
+
+      for (uint32_t i = 0; i < num_measures; i++) {
+      SD_read_data("mesure.txt", mesure_recup_ptr,0);
+      printf("Mesure %lu:\n", i + 1);
+      printf("Number of Zones: %lu\n", mesure_recup_ptr->distance.NumberOfZones);
+      for (uint32_t zone = 0; zone < mesure_recup_ptr->distance.NumberOfZones; zone++)
+      {
+        RANGING_SENSOR_ZoneResult_t *zoneResult = &mesure_recup_ptr->distance.ZoneResult[zone];
+        printf("  Zone %lu:\n", zone + 1);
+        printf("    Number of Targets: %lu\n", zoneResult->NumberOfTargets);
+        for (uint32_t target = 0; target < zoneResult->NumberOfTargets; target++)
+        {
+          printf("      Target %lu:\n", target + 1);
+          printf("        Distance: %lu mm\n", zoneResult->Distance[target]);
+          printf("        Status: %lu\n", zoneResult->Status[target]);
+          printf("        Ambient: %.2f kcps/spad\n", zoneResult->Ambient[target]);
+          printf("        Signal: %.2f kcps/spad\n", zoneResult->Signal[target]);
+        }
+      }
+      }
+    printf("Position:\n  X: %.2f\n  Y: %.2f\n  Z: %.2f\n", mesure_recup_ptr->posX, mesure_recup_ptr->posY, mesure_recup_ptr->posZ);
+    printf("Velocity:\n  X: %.2f\n  Y: %.2f\n  Z: %.2f\n", mesure_recup_ptr->vX, mesure_recup_ptr->vY, mesure_recup_ptr->vZ);
+
       SD_demount();
   /* USER CODE END 2 */
 
