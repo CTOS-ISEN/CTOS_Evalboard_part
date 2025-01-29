@@ -258,8 +258,10 @@ int main(void)
   /* creation of LSM6DSOData_Queue */
   LSM6DSOData_QueueHandle = osMessageQueueNew (16, sizeof(IMU_Data), &LSM6DSOData_Queue_attributes);
 
+
   /* creation of Mesure_Queue */
   Mesure_QueueHandle = osMessageQueueNew (16, sizeof(mesure), &Mesure_Queue_attributes);
+
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -723,6 +725,7 @@ void StartAck_LSM6DSO_Data(void *argument)
   /* Infinite loop */
   for(;;)
   {
+
 	  osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
 	  IMU_Data mov_data;
 	  MyGettingLSM6DSO(&mov_data.Acc, &mov_data.Gyr);
@@ -741,6 +744,7 @@ void StartAck_LSM6DSO_Data(void *argument)
 //				mov_data.axes_acce.y, mov_data.axes_acce.z);
 //		printf("Get at : %ld\n", osKernelGetTickCount());*/
 //		osMessageQueuePut(LSM6DSOData_QueueHandle, &mov_data, 1, osWaitForever);
+
 		osDelay(1);
   }
   /* USER CODE END StartAck_LSM6DSO_Data */
@@ -759,6 +763,7 @@ void StartSendDataLSM6(void *argument)
   /* Infinite loop */
   for(;;)
   {
+
 	  osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
 	  float v_x = 0;
 	  float v_y = 0;
@@ -811,6 +816,7 @@ void StartSendDataLSM6(void *argument)
 //		}
 //		printf("Send at : %ld\n", osKernelGetTickCount());
 //		osMutexRelease(MutexSendHandle);
+
 		osDelay(1);
   }
   /* USER CODE END StartSendDataLSM6 */

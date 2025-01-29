@@ -33,9 +33,11 @@ void MyEnableLSM6DSO(void){
 void MyGettingLSM6DSO(LSM6DSO_Axes_t *Acc, LSM6DSO_Axes_t *Gyr){
 	LSM6DSO_ACC_GetAxes(&lsm6dso_obj_0, Acc);
 	LSM6DSO_GYRO_GetAxes(&lsm6dso_obj_0, Gyr);
+
 //	printf("______________________________________________________\n");
 //	printf("Gyr X : %ld | Gyr Y : %ld | Gyr Z : %ld\n", Gyr->x, Gyr->y, Gyr->z);
 //	printf("Acc X : %ld | Acc Y : %ld | Acc Z : %ld\n", Acc->x, Acc->y, Acc->z);
+
 }
 
 void MyInitLIS2MDL(void){
@@ -58,6 +60,8 @@ void MyEnableLIS2MDL(void){
 }
 
 void MyGettingLIS2MDL(LIS2MDL_Axes_t *Magn){
+
 //	LIS2MDL_MAG_GetAxes(&lis2mdl_obj_0, Magn);
 //	printf("Mag X : %ld | Mag Y : %ld | Mag Z : %ld\n", Magn->x, Magn->y, Magn->z);
+
 }
