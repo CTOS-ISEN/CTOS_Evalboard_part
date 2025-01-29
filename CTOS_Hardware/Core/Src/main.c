@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include "app_fatfs.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -43,7 +44,8 @@ typedef StaticQueue_t osStaticMessageQDef_t;
 
 /* Private variables ---------------------------------------------------------*/
 
-TIM_HandleTypeDef htim2;
+SPI_HandleTypeDef hspi2;
+
 TIM_HandleTypeDef htim16;
 
 UART_HandleTypeDef huart1;
@@ -127,8 +129,8 @@ void PeriphCommonClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USB_PCD_Init(void);
 static void MX_USART1_UART_Init(void);
-static void MX_TIM2_Init(void);
 static void MX_TIM16_Init(void);
+static void MX_SPI2_Init(void);
 void StartDefaultTask(void *argument);
 void StartAck_ToF_Data(void *argument);
 void StartSendData(void *argument);
@@ -152,12 +154,6 @@ ITM_SendChar(*ptr++);
 return len;
 }
 
-typedef struct{
-	RANGING_SENSOR_Result_t distance;
-	float posX;
-	float posY;
-	float posZ;
-}mesure;
 
 #define nb_Mesure_MAX 16
 #define nb_IMUData_MAX 10
@@ -218,8 +214,11 @@ int main(void)
   MX_GPIO_Init();
   MX_USB_PCD_Init();
   MX_USART1_UART_Init();
-  MX_TIM2_Init();
   MX_TIM16_Init();
+  MX_SPI2_Init();
+  if (MX_FATFS_Init() != APP_OK) {
+    Error_Handler();
+  }
   /* USER CODE BEGIN 2 */
 
   log_init(&huart1);
@@ -230,7 +229,6 @@ int main(void)
   MyEnableLIS2MDL();
 
       HAL_TIM_Base_Start_IT(&htim16);
-      HAL_TIM_Base_Start_IT(&htim2);
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -258,10 +256,8 @@ int main(void)
   /* creation of LSM6DSOData_Queue */
   LSM6DSOData_QueueHandle = osMessageQueueNew (16, sizeof(IMU_Data), &LSM6DSOData_Queue_attributes);
 
-
   /* creation of Mesure_Queue */
   Mesure_QueueHandle = osMessageQueueNew (16, sizeof(mesure), &Mesure_Queue_attributes);
-
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -398,47 +394,42 @@ void PeriphCommonClock_Config(void)
 }
 
 /**
-  * @brief TIM2 Initialization Function
+  * @brief SPI2 Initialization Function
   * @param None
   * @retval None
   */
-static void MX_TIM2_Init(void)
+static void MX_SPI2_Init(void)
 {
 
-  /* USER CODE BEGIN TIM2_Init 0 */
+  /* USER CODE BEGIN SPI2_Init 0 */
 
-  /* USER CODE END TIM2_Init 0 */
+  /* USER CODE END SPI2_Init 0 */
 
-  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
-  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  /* USER CODE BEGIN SPI2_Init 1 */
 
-  /* USER CODE BEGIN TIM2_Init 1 */
-
-  /* USER CODE END TIM2_Init 1 */
-  htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 31999;
-  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 999;
-  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  /* USER CODE END SPI2_Init 1 */
+  /* SPI2 parameter configuration*/
+  hspi2.Instance = SPI2;
+  hspi2.Init.Mode = SPI_MODE_MASTER;
+  hspi2.Init.Direction = SPI_DIRECTION_2LINES;
+  hspi2.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi2.Init.NSS = SPI_NSS_SOFT;
+  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128;
+  hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi2.Init.CRCPolynomial = 7;
+  hspi2.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
+  hspi2.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
+  if (HAL_SPI_Init(&hspi2) != HAL_OK)
   {
     Error_Handler();
   }
-  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN TIM2_Init 2 */
+  /* USER CODE BEGIN SPI2_Init 2 */
 
-  /* USER CODE END TIM2_Init 2 */
+  /* USER CODE END SPI2_Init 2 */
 
 }
 
@@ -573,10 +564,17 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, LD2_Pin|LD3_Pin|LD1_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, SD_CS_Pin|VL53L4CX_XSHUT_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(VL53L4CX_XSHUT_GPIO_Port, VL53L4CX_XSHUT_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, LD2_Pin|LD3_Pin|LD1_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : SD_CS_Pin VL53L4CX_XSHUT_Pin */
+  GPIO_InitStruct.Pin = SD_CS_Pin|VL53L4CX_XSHUT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
@@ -590,13 +588,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : VL53L4CX_XSHUT_Pin */
-  GPIO_InitStruct.Pin = VL53L4CX_XSHUT_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(VL53L4CX_XSHUT_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : B2_Pin */
   GPIO_InitStruct.Pin = B2_Pin;
@@ -663,15 +654,15 @@ void StartAck_ToF_Data(void *argument)
 	  osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
 	  mesure data;
 	  ToF_acquire_data(&data.distance);
-
 	  data.posX = 0;
 	  data.posY = 0;
 	  data.posZ = 0;
 
 	  osMessageQueuePut(Mesure_QueueHandle, &data, 1, osWaitForever);
-	  if (osMessageQueueGetCount(Mesure_QueueHandle) == 1){
+	  if (osMessageQueueGetCount(Mesure_QueueHandle) >= 1){
 		  osThreadFlagsSet(SendDataLSM6Handle, 1);
 	  }
+	  osDelay(1);
 //	  osMessageQueuePut(ToFData_QueueHandle, &data.distance, 1, osWaitForever);
 //	  osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
 //	  ToF_acquire_data(&result);
@@ -703,7 +694,7 @@ void StartSendData(void *argument)
 			osMessageQueueGet(ToFData_QueueHandle, &result, (uint8_t*) 1,osWaitForever);
 			//print_result(&result);
 
-			logger_print_result(&result);
+			print_result(&result);
 		}
 	  osMutexRelease(MutexSendHandle);
 
@@ -780,42 +771,55 @@ void StartSendDataLSM6(void *argument)
 	  		float Accz = (IMUData_Array[i].Acc.z * 9.80665)/1000;
 	  		v_z += Accz * deltaTime_IMU / 2000;
 
-	  	}
-
-//	  printf("______________________________________________________\n");
-//	  printf("v X : %f | Acc Y : %f | Acc Z : %f\n", v_x, v_y, v_z);
-
+	  }
+//
+////	  printf("______________________________________________________\n");
+////	  printf("v X : %f | Acc Y : %f | Acc Z : %f\n", v_x, v_y, v_z);
+//
 	  mesure current_mesure;
 	  osMessageQueueGet(Mesure_QueueHandle, &current_mesure, (uint8_t*) 1, osWaitForever);
-
+//
 	  mesure last_mesure;
 	  osMessageQueueGet(Mesure_QueueHandle, &last_mesure, (uint8_t*) 1, osWaitForever);
-
+//
 	  current_mesure.posX = last_mesure.posX + (v_x * deltaTime_tof);       //vitesse moyenne * temp entre 2 mesure = distance entre 2 mesure
 	  current_mesure.posY = last_mesure.posY + (v_y * deltaTime_tof);
 	  current_mesure.posZ = last_mesure.posZ + (v_z * deltaTime_tof);
-
-//	  osMessageQueuePut(Mesure_QueueHandle, &last_mesure, 1, osWaitForever);
+//
+	  current_mesure.vX = v_x;
+	  current_mesure.vY = v_y;
+	  current_mesure.vZ = v_z;
+//
+	  current_mesure.distance = last_mesure.distance;
+//
 	  osMessageQueuePut(Mesure_QueueHandle, &current_mesure, 1, osWaitForever);
-	  printf("Pos : X : %f | Y : %f | Z : %f\n", current_mesure.posX, current_mesure.posY, current_mesure.posZ);
+//	  print_result(&current_mesure.distance);
+//	  printf("Pos : X : %f | Y : %f | Z : %f\n", current_mesure.posX, current_mesure.posY, current_mesure.posZ);
+//	  printf("Vitesse: X: %f | Y: %f | Z: %f\n", current_mesure.vX, current_mesure.vY, current_mesure.vZ);
 
 
-//		osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
-//		osMutexAcquire(MutexSendHandle, osWaitForever);
-//		IMU_Data send_data;
-//		while(osMessageQueueGetCount(LSM6DSOData_QueueHandle)>0) {
-//			osMessageQueueGet(LSM6DSOData_QueueHandle, &send_data, (uint8_t*) 1,
-//					osWaitForever);
-//			log_printf(
-//								"SEND : Xgyro: %ld | Ygyro: %ld | Zgyro: %ld | Xacc: %ld | Yacc: %ld | Zacc: %ld | Xmag: %ld | Ymag : %ld | Zmag : %ld\n\r",
-//								send_data.Gyr.x, send_data.Gyr.y,
-//								send_data.Gyr.z, send_data.Acc.x,
-//								send_data.Acc.y, send_data.Acc.z,
-//								send_data.Mag.x, send_data.Mag.y,
-//								send_data.Mag.z);
-//		}
-//		printf("Send at : %ld\n", osKernelGetTickCount());
-//		osMutexRelease(MutexSendHandle);
+	  SD_mount();
+	  SD_status();
+	  SD_write_data("mesure.txt", &current_mesure);
+
+	  SD_demount();
+
+    //		osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
+    //		osMutexAcquire(MutexSendHandle, osWaitForever);
+    //		IMU_Data send_data;
+    //		while(osMessageQueueGetCount(LSM6DSOData_QueueHandle)>0) {
+    //			osMessageQueueGet(LSM6DSOData_QueueHandle, &send_data, (uint8_t*) 1,
+    //					osWaitForever);
+    //			log_printf(
+    //								"SEND : Xgyro: %ld | Ygyro: %ld | Zgyro: %ld | Xacc: %ld | Yacc: %ld | Zacc: %ld | Xmag: %ld | Ymag : %ld | Zmag : %ld\n\r",
+    //								send_data.Gyr.x, send_data.Gyr.y,
+    //								send_data.Gyr.z, send_data.Acc.x,
+    //								send_data.Acc.y, send_data.Acc.z,
+    //								send_data.Mag.x, send_data.Mag.y,
+    //								send_data.Mag.z);
+    //		}
+    //		printf("Send at : %ld\n", osKernelGetTickCount());
+    //		osMutexRelease(MutexSendHandle);
 
 		osDelay(1);
   }
@@ -835,9 +839,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* USER CODE BEGIN Callback 0 */
 	if (htim->Instance == TIM16) {
 		osThreadFlagsSet(Ack_LSM6DSO_DatHandle, 1);
-
-	}else if(htim->Instance == TIM2){
 		osThreadFlagsSet(Ack_ToF_DataHandle,1);
+
 	}
   /* USER CODE END Callback 0 */
   if (htim->Instance == TIM17) {
