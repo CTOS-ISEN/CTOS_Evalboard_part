@@ -107,6 +107,11 @@ const osMessageQueueAttr_t LSM6DSOData_Queue_attributes = {
   .mq_mem = &LSM6DSOData_QueueBuffer,
   .mq_size = sizeof(LSM6DSOData_QueueBuffer)
 };
+/* Definitions for Mesure_Queue */
+osMessageQueueId_t Mesure_QueueHandle;
+const osMessageQueueAttr_t Mesure_Queue_attributes = {
+  .name = "Mesure_Queue"
+};
 /* Definitions for MutexSend */
 osMutexId_t MutexSendHandle;
 const osMutexAttr_t MutexSend_attributes = {
@@ -147,6 +152,36 @@ ITM_SendChar(*ptr++);
 return len;
 }
 
+typedef struct{
+	RANGING_SENSOR_Result_t distance;
+	float posX;
+	float posY;
+	float posZ;
+}mesure;
+
+#define nb_Mesure_MAX 16
+#define nb_IMUData_MAX 10
+
+#define deltaTime_tof 1000 //1 seconde
+
+// Affectation correcte sans redéclaration
+float deltaTime_IMU = (uint8_t)(deltaTime_tof / nb_IMUData_MAX);
+
+IMU_Data IMUData_Array[ nb_IMUData_MAX ];
+
+void putin_IMUArray(IMU_Data data){
+    static int index=0;
+
+    if(index < nb_IMUData_MAX){
+        IMUData_Array[index] = data;
+        index++;
+    }
+    else{
+        index = 0;
+    }
+
+    return;
+}
 /* USER CODE END 0 */
 
 /**
@@ -222,6 +257,11 @@ int main(void)
 
   /* creation of LSM6DSOData_Queue */
   LSM6DSOData_QueueHandle = osMessageQueueNew (16, sizeof(IMU_Data), &LSM6DSOData_Queue_attributes);
+
+
+  /* creation of Mesure_Queue */
+  Mesure_QueueHandle = osMessageQueueNew (16, sizeof(mesure), &Mesure_Queue_attributes);
+
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -378,7 +418,7 @@ static void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 31999;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 15999;
+  htim2.Init.Period = 999;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -420,7 +460,7 @@ static void MX_TIM16_Init(void)
   htim16.Instance = TIM16;
   htim16.Init.Prescaler = 31999;
   htim16.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim16.Init.Period = 999;
+  htim16.Init.Period = 99;
   htim16.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim16.Init.RepetitionCounter = 0;
   htim16.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
@@ -615,14 +655,28 @@ void StartAck_ToF_Data(void *argument)
 {
   /* USER CODE BEGIN StartAck_ToF_Data */
 
-	static RANGING_SENSOR_Result_t result;
+//	static RANGING_SENSOR_Result_t result;
   /* Infinite loop */
   for(;;)
   {
+
 	  osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
-	  ToF_acquire_data(&result);
-	        osMessageQueuePut(ToFData_QueueHandle, &result, 1, osWaitForever);
-	      osDelay(1);
+	  mesure data;
+	  ToF_acquire_data(&data.distance);
+
+	  data.posX = 0;
+	  data.posY = 0;
+	  data.posZ = 0;
+
+	  osMessageQueuePut(Mesure_QueueHandle, &data, 1, osWaitForever);
+	  if (osMessageQueueGetCount(Mesure_QueueHandle) == 1){
+		  osThreadFlagsSet(SendDataLSM6Handle, 1);
+	  }
+//	  osMessageQueuePut(ToFData_QueueHandle, &data.distance, 1, osWaitForever);
+//	  osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
+//	  ToF_acquire_data(&result);
+//	        osMessageQueuePut(ToFData_QueueHandle, &result, 1, osWaitForever);
+//	      osDelay(1);
 
   }
   /* USER CODE END StartAck_ToF_Data */
@@ -671,17 +725,26 @@ void StartAck_LSM6DSO_Data(void *argument)
   /* Infinite loop */
   for(;;)
   {
-		osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
-		IMU_Data mov_data;
-		MyGettingLSM6DSO(&mov_data.Acc, &mov_data.Gyr);
-		MyGettingLIS2MDL(&mov_data.Mag);
-		/*printf(
-				"Xgyro: %ld | Ygyro: %ld | Zgyro: %ld | Xacc: %ld | Yacc: %ld | Zacc: %ld\n",
-				mov_data.axes_gyro.x, mov_data.axes_gyro.y,
-				mov_data.axes_gyro.z, mov_data.axes_acce.x,
-				mov_data.axes_acce.y, mov_data.axes_acce.z);
-		printf("Get at : %ld\n", osKernelGetTickCount());*/
-		osMessageQueuePut(LSM6DSOData_QueueHandle, &mov_data, 1, osWaitForever);
+
+	  osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
+	  IMU_Data mov_data;
+	  MyGettingLSM6DSO(&mov_data.Acc, &mov_data.Gyr);
+	  MyGettingLIS2MDL(&mov_data.Mag);
+
+	  putin_IMUArray(mov_data);
+
+//		osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
+//		IMU_Data mov_data;
+//		MyGettingLSM6DSO(&mov_data.Acc, &mov_data.Gyr);
+//		MyGettingLIS2MDL(&mov_data.Mag);
+//		/*printf(
+//				"Xgyro: %ld | Ygyro: %ld | Zgyro: %ld | Xacc: %ld | Yacc: %ld | Zacc: %ld\n",
+//				mov_data.axes_gyro.x, mov_data.axes_gyro.y,
+//				mov_data.axes_gyro.z, mov_data.axes_acce.x,
+//				mov_data.axes_acce.y, mov_data.axes_acce.z);
+//		printf("Get at : %ld\n", osKernelGetTickCount());*/
+//		osMessageQueuePut(LSM6DSOData_QueueHandle, &mov_data, 1, osWaitForever);
+
 		osDelay(1);
   }
   /* USER CODE END StartAck_LSM6DSO_Data */
@@ -700,22 +763,60 @@ void StartSendDataLSM6(void *argument)
   /* Infinite loop */
   for(;;)
   {
-		osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
-		osMutexAcquire(MutexSendHandle, osWaitForever);
-		IMU_Data send_data;
-		while(osMessageQueueGetCount(LSM6DSOData_QueueHandle)>0) {
-			osMessageQueueGet(LSM6DSOData_QueueHandle, &send_data, (uint8_t*) 1,
-					osWaitForever);
-			log_printf(
-								"SEND : Xgyro: %ld | Ygyro: %ld | Zgyro: %ld | Xacc: %ld | Yacc: %ld | Zacc: %ld | Xmag: %ld | Ymag : %ld | Zmag : %ld\n\r",
-								send_data.Gyr.x, send_data.Gyr.y,
-								send_data.Gyr.z, send_data.Acc.x,
-								send_data.Acc.y, send_data.Acc.z,
-								send_data.Mag.x, send_data.Mag.y,
-								send_data.Mag.z);
-		}
-		printf("Send at : %ld\n", osKernelGetTickCount());
-		osMutexRelease(MutexSendHandle);
+
+	  osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
+	  float v_x = 0;
+	  float v_y = 0;
+	  float v_z = 0;
+
+
+	  for(int i = 1; i < nb_IMUData_MAX; i++){                    //start a 1 car l'index 0-1 n'existe pas
+		  	float Accx = (IMUData_Array[i].Acc.x * 9.80665)/1000;
+	  		v_x += Accx * deltaTime_IMU / 2000;
+
+	  		float Accy = (IMUData_Array[i].Acc.y * 9.80665)/1000;
+	  		v_y += Accy * deltaTime_IMU / 2000;
+
+	  		float Accz = (IMUData_Array[i].Acc.z * 9.80665)/1000;
+	  		v_z += Accz * deltaTime_IMU / 2000;
+
+	  	}
+
+//	  printf("______________________________________________________\n");
+//	  printf("v X : %f | Acc Y : %f | Acc Z : %f\n", v_x, v_y, v_z);
+
+	  mesure current_mesure;
+	  osMessageQueueGet(Mesure_QueueHandle, &current_mesure, (uint8_t*) 1, osWaitForever);
+
+	  mesure last_mesure;
+	  osMessageQueueGet(Mesure_QueueHandle, &last_mesure, (uint8_t*) 1, osWaitForever);
+
+	  current_mesure.posX = last_mesure.posX + (v_x * deltaTime_tof);       //vitesse moyenne * temp entre 2 mesure = distance entre 2 mesure
+	  current_mesure.posY = last_mesure.posY + (v_y * deltaTime_tof);
+	  current_mesure.posZ = last_mesure.posZ + (v_z * deltaTime_tof);
+
+//	  osMessageQueuePut(Mesure_QueueHandle, &last_mesure, 1, osWaitForever);
+	  osMessageQueuePut(Mesure_QueueHandle, &current_mesure, 1, osWaitForever);
+	  printf("Pos : X : %f | Y : %f | Z : %f\n", current_mesure.posX, current_mesure.posY, current_mesure.posZ);
+
+
+//		osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
+//		osMutexAcquire(MutexSendHandle, osWaitForever);
+//		IMU_Data send_data;
+//		while(osMessageQueueGetCount(LSM6DSOData_QueueHandle)>0) {
+//			osMessageQueueGet(LSM6DSOData_QueueHandle, &send_data, (uint8_t*) 1,
+//					osWaitForever);
+//			log_printf(
+//								"SEND : Xgyro: %ld | Ygyro: %ld | Zgyro: %ld | Xacc: %ld | Yacc: %ld | Zacc: %ld | Xmag: %ld | Ymag : %ld | Zmag : %ld\n\r",
+//								send_data.Gyr.x, send_data.Gyr.y,
+//								send_data.Gyr.z, send_data.Acc.x,
+//								send_data.Acc.y, send_data.Acc.z,
+//								send_data.Mag.x, send_data.Mag.y,
+//								send_data.Mag.z);
+//		}
+//		printf("Send at : %ld\n", osKernelGetTickCount());
+//		osMutexRelease(MutexSendHandle);
+
 		osDelay(1);
   }
   /* USER CODE END StartSendDataLSM6 */
@@ -733,12 +834,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
 	if (htim->Instance == TIM16) {
-			osThreadFlagsSet(Ack_LSM6DSO_DatHandle, 1);
-			osThreadFlagsSet(Ack_ToF_DataHandle,1);
+		osThreadFlagsSet(Ack_LSM6DSO_DatHandle, 1);
 
 	}else if(htim->Instance == TIM2){
-			osThreadFlagsSet(SendDataLSM6Handle, 1);
-			osThreadFlagsSet(SendDataHandle, 1);
+		osThreadFlagsSet(Ack_ToF_DataHandle,1);
 	}
   /* USER CODE END Callback 0 */
   if (htim->Instance == TIM17) {

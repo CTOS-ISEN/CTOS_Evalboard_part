@@ -77,5 +77,6 @@ doc/api/
 # Libraries
 /lib
 
-ToF_sensor/Debug/
+
 CTOS_Hardware/Debug/
+
