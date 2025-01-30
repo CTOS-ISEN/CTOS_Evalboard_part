@@ -57,20 +57,13 @@ osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
   .priority = (osPriority_t) osPriorityNormal,
-  .stack_size = 256 * 4
+  .stack_size = 128 * 4
 };
 /* Definitions for Ack_ToF_Data */
 osThreadId_t Ack_ToF_DataHandle;
 const osThreadAttr_t Ack_ToF_Data_attributes = {
   .name = "Ack_ToF_Data",
   .priority = (osPriority_t) osPriorityNormal,
-  .stack_size = 512 * 4
-};
-/* Definitions for SendData */
-osThreadId_t SendDataHandle;
-const osThreadAttr_t SendData_attributes = {
-  .name = "SendData",
-  .priority = (osPriority_t) osPriorityLow,
   .stack_size = 512 * 4
 };
 /* Definitions for Ack_LSM6DSO_Dat */
@@ -86,17 +79,6 @@ const osThreadAttr_t SendDataLSM6_attributes = {
   .name = "SendDataLSM6",
   .priority = (osPriority_t) osPriorityLow,
   .stack_size = 256 * 4
-};
-/* Definitions for ToFData_Queue */
-osMessageQueueId_t ToFData_QueueHandle;
-uint8_t ToFData_QueueBuffer[ 16 * sizeof( RANGING_SENSOR_Result_t ) ];
-osStaticMessageQDef_t ToFData_QueueControlBlock;
-const osMessageQueueAttr_t ToFData_Queue_attributes = {
-  .name = "ToFData_Queue",
-  .cb_mem = &ToFData_QueueControlBlock,
-  .cb_size = sizeof(ToFData_QueueControlBlock),
-  .mq_mem = &ToFData_QueueBuffer,
-  .mq_size = sizeof(ToFData_QueueBuffer)
 };
 /* Definitions for LSM6DSOData_Queue */
 osMessageQueueId_t LSM6DSOData_QueueHandle;
@@ -114,11 +96,6 @@ osMessageQueueId_t Mesure_QueueHandle;
 const osMessageQueueAttr_t Mesure_Queue_attributes = {
   .name = "Mesure_Queue"
 };
-/* Definitions for MutexSend */
-osMutexId_t MutexSendHandle;
-const osMutexAttr_t MutexSend_attributes = {
-  .name = "MutexSend"
-};
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -133,7 +110,6 @@ static void MX_TIM16_Init(void);
 static void MX_SPI2_Init(void);
 void StartDefaultTask(void *argument);
 void StartAck_ToF_Data(void *argument);
-void StartSendData(void *argument);
 void StartAck_LSM6DSO_Data(void *argument);
 void StartSendDataLSM6(void *argument);
 
@@ -233,9 +209,6 @@ int main(void)
 
   /* Init scheduler */
   osKernelInitialize();
-  /* Create the mutex(es) */
-  /* creation of MutexSend */
-  MutexSendHandle = osMutexNew(&MutexSend_attributes);
 
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
@@ -250,9 +223,6 @@ int main(void)
   /* USER CODE END RTOS_TIMERS */
 
   /* Create the queue(s) */
-  /* creation of ToFData_Queue */
-  ToFData_QueueHandle = osMessageQueueNew (16, sizeof(RANGING_SENSOR_Result_t), &ToFData_Queue_attributes);
-
   /* creation of LSM6DSOData_Queue */
   LSM6DSOData_QueueHandle = osMessageQueueNew (16, sizeof(IMU_Data), &LSM6DSOData_Queue_attributes);
 
@@ -269,9 +239,6 @@ int main(void)
 
   /* creation of Ack_ToF_Data */
   Ack_ToF_DataHandle = osThreadNew(StartAck_ToF_Data, NULL, &Ack_ToF_Data_attributes);
-
-  /* creation of SendData */
-  SendDataHandle = osThreadNew(StartSendData, NULL, &SendData_attributes);
 
   /* creation of Ack_LSM6DSO_Dat */
   Ack_LSM6DSO_DatHandle = osThreadNew(StartAck_LSM6DSO_Data, NULL, &Ack_LSM6DSO_Dat_attributes);
@@ -673,36 +640,6 @@ void StartAck_ToF_Data(void *argument)
   /* USER CODE END StartAck_ToF_Data */
 }
 
-/* USER CODE BEGIN Header_StartSendData */
-/**
-* @brief Function implementing the SendData thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_StartSendData */
-void StartSendData(void *argument)
-{
-  /* USER CODE BEGIN StartSendData */
-	static RANGING_SENSOR_Result_t result;
-  /* Infinite loop */
-  for(;;)
-  {
-	  osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
-	  osMutexAcquire(MutexSendHandle, osWaitForever);
-	  while(osMessageQueueGetCount(ToFData_QueueHandle)>0){
-
-			osMessageQueueGet(ToFData_QueueHandle, &result, (uint8_t*) 1,osWaitForever);
-			//print_result(&result);
-
-			print_result(&result);
-		}
-	  osMutexRelease(MutexSendHandle);
-
-    osDelay(1);
-  }
-  /* USER CODE END StartSendData */
-}
-
 /* USER CODE BEGIN Header_StartAck_LSM6DSO_Data */
 /**
 * @brief Function implementing the Ack_LSM6DSO_Dat thread.
@@ -723,18 +660,6 @@ void StartAck_LSM6DSO_Data(void *argument)
 	  MyGettingLIS2MDL(&mov_data.Mag);
 
 	  putin_IMUArray(mov_data);
-
-//		osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
-//		IMU_Data mov_data;
-//		MyGettingLSM6DSO(&mov_data.Acc, &mov_data.Gyr);
-//		MyGettingLIS2MDL(&mov_data.Mag);
-//		/*printf(
-//				"Xgyro: %ld | Ygyro: %ld | Zgyro: %ld | Xacc: %ld | Yacc: %ld | Zacc: %ld\n",
-//				mov_data.axes_gyro.x, mov_data.axes_gyro.y,
-//				mov_data.axes_gyro.z, mov_data.axes_acce.x,
-//				mov_data.axes_acce.y, mov_data.axes_acce.z);
-//		printf("Get at : %ld\n", osKernelGetTickCount());*/
-//		osMessageQueuePut(LSM6DSOData_QueueHandle, &mov_data, 1, osWaitForever);
 
 		osDelay(1);
   }
@@ -772,54 +697,35 @@ void StartSendDataLSM6(void *argument)
 	  		v_z += Accz * deltaTime_IMU / 2000;
 
 	  }
-//
-////	  printf("______________________________________________________\n");
-////	  printf("v X : %f | Acc Y : %f | Acc Z : %f\n", v_x, v_y, v_z);
-//
+
 	  mesure current_mesure;
 	  osMessageQueueGet(Mesure_QueueHandle, &current_mesure, (uint8_t*) 1, osWaitForever);
 //
-	  mesure last_mesure;
-	  osMessageQueueGet(Mesure_QueueHandle, &last_mesure, (uint8_t*) 1, osWaitForever);
+//	  mesure last_mesure;
+//	  osMessageQueueGet(Mesure_QueueHandle, &last_mesure, (uint8_t*) 1, osWaitForever);
 //
-	  current_mesure.posX = last_mesure.posX + (v_x * deltaTime_tof);       //vitesse moyenne * temp entre 2 mesure = distance entre 2 mesure
-	  current_mesure.posY = last_mesure.posY + (v_y * deltaTime_tof);
-	  current_mesure.posZ = last_mesure.posZ + (v_z * deltaTime_tof);
+//	  current_mesure.posX = last_mesure.posX + (v_x * deltaTime_tof);       //vitesse moyenne * temp entre 2 mesure = distance entre 2 mesure
+//	  current_mesure.posY = last_mesure.posY + (v_y * deltaTime_tof);
+//	  current_mesure.posZ = last_mesure.posZ + (v_z * deltaTime_tof);
 //
 	  current_mesure.vX = v_x;
 	  current_mesure.vY = v_y;
 	  current_mesure.vZ = v_z;
 //
-	  current_mesure.distance = last_mesure.distance;
+//	  current_mesure.distance = last_mesure.distance;
 //
-	  osMessageQueuePut(Mesure_QueueHandle, &current_mesure, 1, osWaitForever);
-//	  print_result(&current_mesure.distance);
-//	  printf("Pos : X : %f | Y : %f | Z : %f\n", current_mesure.posX, current_mesure.posY, current_mesure.posZ);
-//	  printf("Vitesse: X: %f | Y: %f | Z: %f\n", current_mesure.vX, current_mesure.vY, current_mesure.vZ);
+//	  osMessageQueuePut(Mesure_QueueHandle, &current_mesure, 1, osWaitForever);
+	  print_result(&current_mesure.distance);
+	  printf("Pos : X : %f | Y : %f | Z : %f\n", current_mesure.posX, current_mesure.posY, current_mesure.posZ);
+	  printf("Vitesse: X: %f | Y: %f | Z: %f\n", current_mesure.vX, current_mesure.vY, current_mesure.vZ);
 
 
 	  SD_mount();
-	  SD_status();
+	  //SD_status();
 	  SD_write_data("mesure.txt", &current_mesure);
 
 	  SD_demount();
 
-    //		osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
-    //		osMutexAcquire(MutexSendHandle, osWaitForever);
-    //		IMU_Data send_data;
-    //		while(osMessageQueueGetCount(LSM6DSOData_QueueHandle)>0) {
-    //			osMessageQueueGet(LSM6DSOData_QueueHandle, &send_data, (uint8_t*) 1,
-    //					osWaitForever);
-    //			log_printf(
-    //								"SEND : Xgyro: %ld | Ygyro: %ld | Zgyro: %ld | Xacc: %ld | Yacc: %ld | Zacc: %ld | Xmag: %ld | Ymag : %ld | Zmag : %ld\n\r",
-    //								send_data.Gyr.x, send_data.Gyr.y,
-    //								send_data.Gyr.z, send_data.Acc.x,
-    //								send_data.Acc.y, send_data.Acc.z,
-    //								send_data.Mag.x, send_data.Mag.y,
-    //								send_data.Mag.z);
-    //		}
-    //		printf("Send at : %ld\n", osKernelGetTickCount());
-    //		osMutexRelease(MutexSendHandle);
 
 		osDelay(1);
   }
