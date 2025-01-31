@@ -12,13 +12,13 @@
 
 typedef struct {
     RANGING_SENSOR_Result_t distance;
-    float posX;
-    float posY;
-    float posZ;
+    int32_t AccX;
+    int32_t AccY;
+    int32_t AccZ;
 
-    float vX;
-    float vY;
-    float vZ;
+    int32_t GyroX;
+    int32_t GyroY;
+    int32_t GyroZ;
 } mesure;
 
 #endif /* CONFIG_CONFIG_H_ */

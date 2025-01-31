@@ -83,12 +83,12 @@ void SD_write_data(const char* file_name, mesure* data) {
 
     // Write the position and velocity
     offset += snprintf(buffer + offset, sizeof(buffer) - offset,
-                       "Position:\n  X: %.2f\n  Y: %.2f\n  Z: %.2f\n",
-                       data->posX, data->posY, data->posZ);
+                       "Acceleration:\n  X: %ld\n  Y: %ld\n  Z: %ld\n",
+                       data->AccX, data->AccY, data->AccZ);
 
     offset += snprintf(buffer + offset, sizeof(buffer) - offset,
-                       "Velocity:\n  X: %.2f\n  Y: %.2f\n  Z: %.2f\n",
-                       data->vX, data->vY, data->vZ);
+                       "Gyro:\n  X: %ld\n  Y: %ld\n  Z: %ld\n",
+                       data->GyroX, data->GyroY, data->GyroZ);
 
     // Write the formatted data to the file
     UINT bytesWritten;
@@ -155,8 +155,8 @@ void SD_read_data(const char* file_name, mesure* data, uint32_t measure_index) {
                 }
 
                 // Analyser la position et la vitesse
-                sscanf(ptr, "%*[^P]Position:\n  X: %f\n  Y: %f\n  Z: %f\n", &data->posX, &data->posY, &data->posZ);
-                sscanf(ptr, "%*[^V]Velocity:\n  X: %f\n  Y: %f\n  Z: %f\n", &data->vX, &data->vY, &data->vZ);
+                sscanf(ptr, "%*[^P]Acceleration:\n  X: %ld\n  Y: %ld\n  Z: %ld\n", &data->AccX, &data->AccY, &data->AccZ);
+                sscanf(ptr, "%*[^V]Gyro:\n  X: %ld\n  Y: %ld\n  Z: %ld\n", &data->GyroX, &data->GyroY, &data->GyroZ);
                 //printf("Position: X: %.2f, Y: %.2f, Z: %.2f\n", data->posX, data->posY, data->posZ);
                 //printf("Velocity: X: %.2f, Y: %.2f, Z: %.2f\n", data->vX, data->vY, data->vZ);
 

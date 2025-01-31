@@ -134,26 +134,11 @@ return len;
 #define nb_Mesure_MAX 16
 #define nb_IMUData_MAX 10
 
-#define deltaTime_tof 1000 //1 seconde
+#define deltaTime_tof 100 //1 seconde
 
-// Affectation correcte sans redéclaration
+
 float deltaTime_IMU = (uint8_t)(deltaTime_tof / nb_IMUData_MAX);
 
-IMU_Data IMUData_Array[ nb_IMUData_MAX ];
-
-void putin_IMUArray(IMU_Data data){
-    static int index=0;
-
-    if(index < nb_IMUData_MAX){
-        IMUData_Array[index] = data;
-        index++;
-    }
-    else{
-        index = 0;
-    }
-
-    return;
-}
 /* USER CODE END 0 */
 
 /**
@@ -621,9 +606,12 @@ void StartAck_ToF_Data(void *argument)
 	  osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
 	  mesure data;
 	  ToF_acquire_data(&data.distance);
-	  data.posX = 0;
-	  data.posY = 0;
-	  data.posZ = 0;
+	  data.AccX = 0;
+	  data.AccY = 0;
+	  data.AccZ = 0;
+	  data.GyroX = 0;
+	  data.GyroY = 0;
+	  data.GyroZ = 0;
 
 	  osMessageQueuePut(Mesure_QueueHandle, &data, 1, osWaitForever);
 	  if (osMessageQueueGetCount(Mesure_QueueHandle) >= 1){
@@ -659,7 +647,7 @@ void StartAck_LSM6DSO_Data(void *argument)
 	  MyGettingLSM6DSO(&mov_data.Acc, &mov_data.Gyr);
 	  MyGettingLIS2MDL(&mov_data.Mag);
 
-	  putin_IMUArray(mov_data);
+	  osMessageQueuePut(LSM6DSOData_QueueHandle, &mov_data, 1, osWaitForever);
 
 		osDelay(1);
   }
@@ -681,50 +669,33 @@ void StartSendDataLSM6(void *argument)
   {
 
 	  osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
-	  float v_x = 0;
-	  float v_y = 0;
-	  float v_z = 0;
 
 
-	  for(int i = 1; i < nb_IMUData_MAX; i++){                    //start a 1 car l'index 0-1 n'existe pas
-		  	float Accx = (IMUData_Array[i].Acc.x * 9.80665)/1000;
-	  		v_x += Accx * deltaTime_IMU / 2000;
-
-	  		float Accy = (IMUData_Array[i].Acc.y * 9.80665)/1000;
-	  		v_y += Accy * deltaTime_IMU / 2000;
-
-	  		float Accz = (IMUData_Array[i].Acc.z * 9.80665)/1000;
-	  		v_z += Accz * deltaTime_IMU / 2000;
-
-	  }
+	  IMU_Data mov_data;
+	  osMessageQueueGet(LSM6DSOData_QueueHandle, &mov_data, (uint8_t*) 1, osWaitForever);
 
 	  mesure current_mesure;
 	  osMessageQueueGet(Mesure_QueueHandle, &current_mesure, (uint8_t*) 1, osWaitForever);
-//
-	  mesure last_mesure;
-	  osMessageQueueGet(Mesure_QueueHandle, &last_mesure, (uint8_t*) 1, osWaitForever);
-//
-	  current_mesure.posX = last_mesure.posX + (v_x * deltaTime_tof);       //vitesse moyenne * temp entre 2 mesure = distance entre 2 mesure
-	  current_mesure.posY = last_mesure.posY + (v_y * deltaTime_tof);
-	  current_mesure.posZ = last_mesure.posZ + (v_z * deltaTime_tof);
-//
-	  current_mesure.vX = v_x;
-	  current_mesure.vY = v_y;
-	  current_mesure.vZ = v_z;
-//
-	  current_mesure.distance = last_mesure.distance;
-//
-	  osMessageQueuePut(Mesure_QueueHandle, &current_mesure, 1, osWaitForever);
+
+	  current_mesure.AccX= mov_data.Acc.x;
+	  current_mesure.AccY = mov_data.Acc.y;
+	  current_mesure.AccZ = mov_data.Acc.z;
+
+	  current_mesure.GyroX = mov_data.Gyr.x;
+	  current_mesure.GyroY = mov_data.Gyr.y;
+	  current_mesure.GyroZ = mov_data.Gyr.z;
+
+
 	  print_result(&current_mesure.distance);
-	  printf("Pos : X : %f | Y : %f | Z : %f\n", current_mesure.posX, current_mesure.posY, current_mesure.posZ);
-	  printf("Vitesse: X: %f | Y: %f | Z: %f\n", current_mesure.vX, current_mesure.vY, current_mesure.vZ);
+	  printf("Acceleration : X : %ld | Y : %ld | Z : %ld\n", current_mesure.AccX, current_mesure.AccY, current_mesure.AccZ);
+	  printf("Gyroscope: X: %ld | Y: %ld | Z: %ld\n", current_mesure.GyroX, current_mesure.GyroY, current_mesure.GyroZ);
 
 
 //	  SD_mount();
-	  //SD_status();
-	//  SD_write_data("mesure.txt", &current_mesure);
-
-	  //SD_demount();
+//	  SD_status();
+//	  SD_write_data("mesure.txt", &current_mesure);
+//
+//	  SD_demount();
 
 
 		osDelay(1);
