@@ -701,30 +701,30 @@ void StartSendDataLSM6(void *argument)
 	  mesure current_mesure;
 	  osMessageQueueGet(Mesure_QueueHandle, &current_mesure, (uint8_t*) 1, osWaitForever);
 //
-//	  mesure last_mesure;
-//	  osMessageQueueGet(Mesure_QueueHandle, &last_mesure, (uint8_t*) 1, osWaitForever);
+	  mesure last_mesure;
+	  osMessageQueueGet(Mesure_QueueHandle, &last_mesure, (uint8_t*) 1, osWaitForever);
 //
-//	  current_mesure.posX = last_mesure.posX + (v_x * deltaTime_tof);       //vitesse moyenne * temp entre 2 mesure = distance entre 2 mesure
-//	  current_mesure.posY = last_mesure.posY + (v_y * deltaTime_tof);
-//	  current_mesure.posZ = last_mesure.posZ + (v_z * deltaTime_tof);
+	  current_mesure.posX = last_mesure.posX + (v_x * deltaTime_tof);       //vitesse moyenne * temp entre 2 mesure = distance entre 2 mesure
+	  current_mesure.posY = last_mesure.posY + (v_y * deltaTime_tof);
+	  current_mesure.posZ = last_mesure.posZ + (v_z * deltaTime_tof);
 //
 	  current_mesure.vX = v_x;
 	  current_mesure.vY = v_y;
 	  current_mesure.vZ = v_z;
 //
-//	  current_mesure.distance = last_mesure.distance;
+	  current_mesure.distance = last_mesure.distance;
 //
-//	  osMessageQueuePut(Mesure_QueueHandle, &current_mesure, 1, osWaitForever);
+	  osMessageQueuePut(Mesure_QueueHandle, &current_mesure, 1, osWaitForever);
 	  print_result(&current_mesure.distance);
 	  printf("Pos : X : %f | Y : %f | Z : %f\n", current_mesure.posX, current_mesure.posY, current_mesure.posZ);
 	  printf("Vitesse: X: %f | Y: %f | Z: %f\n", current_mesure.vX, current_mesure.vY, current_mesure.vZ);
 
 
-	  SD_mount();
+//	  SD_mount();
 	  //SD_status();
-	  SD_write_data("mesure.txt", &current_mesure);
+	//  SD_write_data("mesure.txt", &current_mesure);
 
-	  SD_demount();
+	  //SD_demount();
 
 
 		osDelay(1);
