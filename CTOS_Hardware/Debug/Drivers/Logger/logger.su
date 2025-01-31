@@ -1,3 +1,0 @@
-../Drivers/Logger/logger.c:21:6:log_init	16	static
-../Drivers/Logger/logger.c:25:6:log_transmit	16	static
-../Drivers/Logger/logger.c:29:6:log_printf	16	static
