@@ -71,13 +71,13 @@ void SD_write_data(const char* file_name, mesure* data) {
                                "      Target %lu:\n"
                                "        Distance: %lu mm\n"
                                "        Status: %lu\n"
-                               "        Ambient: %.2f kcps/spad\n"
-                               "        Signal: %.2f kcps/spad\n",
+                               "        Ambient: %.2f kcps/spad\n",
+                               //"        Signal: %.2f kcps/spad\n",
                                target + 1,
                                zoneResult->Distance[target],
                                zoneResult->Status[target],
-                               zoneResult->Ambient[target],
-                               zoneResult->Signal[target]);
+                               zoneResult->Ambient[target]);
+                               //zoneResult->Signal[target]);
         }
     }
 

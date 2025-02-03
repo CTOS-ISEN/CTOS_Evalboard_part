@@ -18,7 +18,6 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "cmsis_os.h"
 #include "app_fatfs.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -29,7 +28,6 @@
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
-typedef StaticQueue_t osStaticMessageQDef_t;
 /* USER CODE BEGIN PTD */
 
 /* USER CODE END PTD */
@@ -52,52 +50,9 @@ UART_HandleTypeDef huart1;
 
 PCD_HandleTypeDef hpcd_USB_FS;
 
-/* Definitions for defaultTask */
-osThreadId_t defaultTaskHandle;
-const osThreadAttr_t defaultTask_attributes = {
-  .name = "defaultTask",
-  .priority = (osPriority_t) osPriorityNormal,
-  .stack_size = 128 * 4
-};
-/* Definitions for Ack_ToF_Data */
-osThreadId_t Ack_ToF_DataHandle;
-const osThreadAttr_t Ack_ToF_Data_attributes = {
-  .name = "Ack_ToF_Data",
-  .priority = (osPriority_t) osPriorityNormal,
-  .stack_size = 512 * 4
-};
-/* Definitions for Ack_LSM6DSO_Dat */
-osThreadId_t Ack_LSM6DSO_DatHandle;
-const osThreadAttr_t Ack_LSM6DSO_Dat_attributes = {
-  .name = "Ack_LSM6DSO_Dat",
-  .priority = (osPriority_t) osPriorityLow,
-  .stack_size = 256 * 4
-};
-/* Definitions for SendDataLSM6 */
-osThreadId_t SendDataLSM6Handle;
-const osThreadAttr_t SendDataLSM6_attributes = {
-  .name = "SendDataLSM6",
-  .priority = (osPriority_t) osPriorityLow,
-  .stack_size = 256 * 4
-};
-/* Definitions for LSM6DSOData_Queue */
-osMessageQueueId_t LSM6DSOData_QueueHandle;
-uint8_t LSM6DSOData_QueueBuffer[ 16 * sizeof( IMU_Data ) ];
-osStaticMessageQDef_t LSM6DSOData_QueueControlBlock;
-const osMessageQueueAttr_t LSM6DSOData_Queue_attributes = {
-  .name = "LSM6DSOData_Queue",
-  .cb_mem = &LSM6DSOData_QueueControlBlock,
-  .cb_size = sizeof(LSM6DSOData_QueueControlBlock),
-  .mq_mem = &LSM6DSOData_QueueBuffer,
-  .mq_size = sizeof(LSM6DSOData_QueueBuffer)
-};
-/* Definitions for Mesure_Queue */
-osMessageQueueId_t Mesure_QueueHandle;
-const osMessageQueueAttr_t Mesure_Queue_attributes = {
-  .name = "Mesure_Queue"
-};
 /* USER CODE BEGIN PV */
-
+mesure global_mesure_data;
+IMU_Data global_imu_data;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -108,11 +63,6 @@ static void MX_USB_PCD_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_TIM16_Init(void);
 static void MX_SPI2_Init(void);
-void StartDefaultTask(void *argument);
-void StartAck_ToF_Data(void *argument);
-void StartAck_LSM6DSO_Data(void *argument);
-void StartSendDataLSM6(void *argument);
-
 /* USER CODE BEGIN PFP */
 int _write(int file,char *ptr,int len);
 /* USER CODE END PFP */
@@ -138,6 +88,133 @@ return len;
 
 
 float deltaTime_IMU = (uint8_t)(deltaTime_tof / nb_IMUData_MAX);
+
+
+typedef enum {
+	STATE_START, STATE_ACK_TOF, STATE_ACK_GNSS, STATE_SEND
+} FSM_States_Enum;
+
+typedef enum {
+	NOT_EXECUTED, EXECUTED,
+} ExecutionState_Enum;
+
+
+int16_t actual_state = 0;
+int16_t target_state = 0;
+
+FSM_States_Enum current_state = STATE_START;
+ExecutionState_Enum execution_state = NOT_EXECUTED;
+
+void (*state_callbacks[5])(void);
+
+/**
+ * @Brief Set the state to the new state given
+ * @param New state to set to current
+ */
+void set_new_state(FSM_States_Enum new_state){
+	current_state = new_state;
+	if(new_state == STATE_ACK_TOF) actual_state = 0;
+	if(new_state == STATE_ACK_GNSS) actual_state = 1;
+	if(new_state == STATE_SEND) actual_state = 2;
+	execution_state = NOT_EXECUTED;
+}
+
+/**
+ * @Brief Start of the FSM
+ */
+void state_start(void){
+	if(execution_state == NOT_EXECUTED){
+		printf("Starting.\r\n");
+	}
+}
+
+/**
+ * @Brief
+ */
+void state_ack_tof(void) {
+  mesure data;
+  ToF_acquire_data(&data.distance);
+
+  // Stocker les données dans une variable globale ou une structure partagée
+  global_mesure_data = data;
+}
+
+void state_ack_gnss(void) {
+  IMU_Data mov_data;
+  MyGettingLSM6DSO(&mov_data.Acc, &mov_data.Gyr);
+  MyGettingLIS2MDL(&mov_data.Mag);
+
+  // Stocker les données dans une variable globale ou une structure partagée
+  global_imu_data = mov_data;
+}
+
+void state_send(void) {
+  // Récupérer les données stockées
+  mesure current_mesure = global_mesure_data;
+  IMU_Data mov_data = global_imu_data;
+
+  current_mesure.AccX = mov_data.Acc.x;
+  current_mesure.AccY = mov_data.Acc.y;
+  current_mesure.AccZ = mov_data.Acc.z;
+
+  current_mesure.GyroX = mov_data.Gyr.x;
+  current_mesure.GyroY = mov_data.Gyr.y;
+  current_mesure.GyroZ = mov_data.Gyr.z;
+
+  print_result(&current_mesure.distance);
+  printf("Acceleration : X : %ld | Y : %ld | Z : %ld\n", current_mesure.AccX, current_mesure.AccY, current_mesure.AccZ);
+  printf("Gyroscope: X: %ld | Y: %ld | Z: %ld\n", current_mesure.GyroX, current_mesure.GyroY, current_mesure.GyroZ);
+
+  //SD_mount();
+  //SD_status();
+  //SD_write_data("mesure.txt", &current_mesure);
+  //SD_demount();
+}
+
+
+/**
+ * @Brief Init all the required variables for the use of the FSM
+ */
+void init_fsm(void){
+	actual_state = 0;
+	target_state = 0;
+
+	state_callbacks[STATE_START] = state_start;
+	state_callbacks[STATE_ACK_TOF] = state_ack_tof;
+	state_callbacks[STATE_ACK_GNSS] = state_ack_gnss;
+	state_callbacks[STATE_SEND] = state_send;
+
+	set_new_state(STATE_START);
+}
+
+/**
+ * @Brief Manage the FSM by changing the state if necessary
+ */
+void fsm_project(void){
+	state_callbacks[current_state]();
+
+	execution_state = EXECUTED;
+
+	switch(current_state){
+
+	case STATE_START:
+		set_new_state(STATE_ACK_TOF);
+		break;
+
+	case STATE_ACK_TOF:
+		set_new_state(STATE_ACK_GNSS);
+		break;
+
+	case STATE_ACK_GNSS:
+		set_new_state(STATE_SEND);
+		break;
+
+	case STATE_SEND:
+		set_new_state(STATE_ACK_TOF);
+		break;
+
+	}
+}
 
 /* USER CODE END 0 */
 
@@ -181,77 +258,25 @@ int main(void)
     Error_Handler();
   }
   /* USER CODE BEGIN 2 */
-
+  init_fsm();
   log_init(&huart1);
-  ToF_init();
-  MyInitLSM6DSO();
-  MyInitLIS2MDL();
-  MyEnableLSM6DSO();
-  MyEnableLIS2MDL();
+  //ToF_init();
+  //MyInitLSM6DSO();
+  //MyInitLIS2MDL();
+  //MyEnableLSM6DSO();
+  //MyEnableLIS2MDL();
 
       HAL_TIM_Base_Start_IT(&htim16);
   /* USER CODE END 2 */
-
-  /* Init scheduler */
-  osKernelInitialize();
-
-  /* USER CODE BEGIN RTOS_MUTEX */
-  /* add mutexes, ... */
-  /* USER CODE END RTOS_MUTEX */
-
-  /* USER CODE BEGIN RTOS_SEMAPHORES */
-  /* add semaphores, ... */
-  /* USER CODE END RTOS_SEMAPHORES */
-
-  /* USER CODE BEGIN RTOS_TIMERS */
-  /* start timers, add new ones, ... */
-  /* USER CODE END RTOS_TIMERS */
-
-  /* Create the queue(s) */
-  /* creation of LSM6DSOData_Queue */
-  LSM6DSOData_QueueHandle = osMessageQueueNew (16, sizeof(IMU_Data), &LSM6DSOData_Queue_attributes);
-
-  /* creation of Mesure_Queue */
-  Mesure_QueueHandle = osMessageQueueNew (16, sizeof(mesure), &Mesure_Queue_attributes);
-
-  /* USER CODE BEGIN RTOS_QUEUES */
-  /* add queues, ... */
-  /* USER CODE END RTOS_QUEUES */
-
-  /* Create the thread(s) */
-  /* creation of defaultTask */
-  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
-
-  /* creation of Ack_ToF_Data */
-  Ack_ToF_DataHandle = osThreadNew(StartAck_ToF_Data, NULL, &Ack_ToF_Data_attributes);
-
-  /* creation of Ack_LSM6DSO_Dat */
-  Ack_LSM6DSO_DatHandle = osThreadNew(StartAck_LSM6DSO_Data, NULL, &Ack_LSM6DSO_Dat_attributes);
-
-  /* creation of SendDataLSM6 */
-  SendDataLSM6Handle = osThreadNew(StartSendDataLSM6, NULL, &SendDataLSM6_attributes);
-
-  /* USER CODE BEGIN RTOS_THREADS */
-  /* add threads, ... */
-  /* USER CODE END RTOS_THREADS */
-
-  /* USER CODE BEGIN RTOS_EVENTS */
-  /* add events, ... */
-  /* USER CODE END RTOS_EVENTS */
-
-  /* Start scheduler */
-  osKernelStart();
-
-  /* We should never get here as control is now taken by the scheduler */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
   }
   /* USER CODE END 3 */
 }
@@ -554,10 +579,10 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(B3_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI0_IRQn, 5, 0);
+  HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 
-  HAL_NVIC_SetPriority(EXTI4_IRQn, 5, 0);
+  HAL_NVIC_SetPriority(EXTI4_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
@@ -567,141 +592,6 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
-
-/* USER CODE BEGIN Header_StartDefaultTask */
-/**
-  * @brief  Function implementing the defaultTask thread.
-  * @param  argument: Not used
-  * @retval None
-  */
-/* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void *argument)
-{
-  /* USER CODE BEGIN 5 */
-
-  /* Infinite loop */
-  for(;;)
-  {
-	  osDelay(1);
-  }
-  /* USER CODE END 5 */
-}
-
-/* USER CODE BEGIN Header_StartAck_ToF_Data */
-/**
-* @brief Function implementing the Ack_ToF_Data thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_StartAck_ToF_Data */
-void StartAck_ToF_Data(void *argument)
-{
-  /* USER CODE BEGIN StartAck_ToF_Data */
-
-//	static RANGING_SENSOR_Result_t result;
-  /* Infinite loop */
-  for(;;)
-  {
-
-	  osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
-	  mesure data;
-	  ToF_acquire_data(&data.distance);
-	  data.AccX = 0;
-	  data.AccY = 0;
-	  data.AccZ = 0;
-	  data.GyroX = 0;
-	  data.GyroY = 0;
-	  data.GyroZ = 0;
-
-	  osMessageQueuePut(Mesure_QueueHandle, &data, 1, osWaitForever);
-	  if (osMessageQueueGetCount(Mesure_QueueHandle) >= 1){
-		  osThreadFlagsSet(SendDataLSM6Handle, 1);
-	  }
-	  osDelay(1);
-//	  osMessageQueuePut(ToFData_QueueHandle, &data.distance, 1, osWaitForever);
-//	  osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
-//	  ToF_acquire_data(&result);
-//	        osMessageQueuePut(ToFData_QueueHandle, &result, 1, osWaitForever);
-//	      osDelay(1);
-
-  }
-  /* USER CODE END StartAck_ToF_Data */
-}
-
-/* USER CODE BEGIN Header_StartAck_LSM6DSO_Data */
-/**
-* @brief Function implementing the Ack_LSM6DSO_Dat thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_StartAck_LSM6DSO_Data */
-void StartAck_LSM6DSO_Data(void *argument)
-{
-  /* USER CODE BEGIN StartAck_LSM6DSO_Data */
-  /* Infinite loop */
-  for(;;)
-  {
-
-	  osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
-	  IMU_Data mov_data;
-	  MyGettingLSM6DSO(&mov_data.Acc, &mov_data.Gyr);
-	  MyGettingLIS2MDL(&mov_data.Mag);
-
-	  osMessageQueuePut(LSM6DSOData_QueueHandle, &mov_data, 1, osWaitForever);
-
-		osDelay(1);
-  }
-  /* USER CODE END StartAck_LSM6DSO_Data */
-}
-
-/* USER CODE BEGIN Header_StartSendDataLSM6 */
-/**
-* @brief Function implementing the SendDataLSM6 thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_StartSendDataLSM6 */
-void StartSendDataLSM6(void *argument)
-{
-  /* USER CODE BEGIN StartSendDataLSM6 */
-  /* Infinite loop */
-  for(;;)
-  {
-
-	  osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
-
-
-	  IMU_Data mov_data;
-	  osMessageQueueGet(LSM6DSOData_QueueHandle, &mov_data, (uint8_t*) 1, osWaitForever);
-
-	  mesure current_mesure;
-	  osMessageQueueGet(Mesure_QueueHandle, &current_mesure, (uint8_t*) 1, osWaitForever);
-
-	  current_mesure.AccX= mov_data.Acc.x;
-	  current_mesure.AccY = mov_data.Acc.y;
-	  current_mesure.AccZ = mov_data.Acc.z;
-
-	  current_mesure.GyroX = mov_data.Gyr.x;
-	  current_mesure.GyroY = mov_data.Gyr.y;
-	  current_mesure.GyroZ = mov_data.Gyr.z;
-
-
-	  print_result(&current_mesure.distance);
-	  printf("Acceleration : X : %ld | Y : %ld | Z : %ld\n", current_mesure.AccX, current_mesure.AccY, current_mesure.AccZ);
-	  printf("Gyroscope: X: %ld | Y: %ld | Z: %ld\n", current_mesure.GyroX, current_mesure.GyroY, current_mesure.GyroZ);
-
-
-//	  SD_mount();
-//	  SD_status();
-//	  SD_write_data("mesure.txt", &current_mesure);
-//
-//	  SD_demount();
-
-
-		osDelay(1);
-  }
-  /* USER CODE END StartSendDataLSM6 */
-}
 
 /**
   * @brief  Period elapsed callback in non blocking mode
@@ -715,8 +605,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
 	if (htim->Instance == TIM16) {
-		osThreadFlagsSet(Ack_LSM6DSO_DatHandle, 1);
-		osThreadFlagsSet(Ack_ToF_DataHandle,1);
+		fsm_project();
 
 	}
   /* USER CODE END Callback 0 */
