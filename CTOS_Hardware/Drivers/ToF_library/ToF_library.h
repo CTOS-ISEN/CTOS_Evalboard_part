@@ -8,7 +8,7 @@
 #ifndef TOF_LIBRARY_TOF_LIBRARY_H_
 #define TOF_LIBRARY_TOF_LIBRARY_H_
 
-#include "main.h"
+#include "main.h"	//sinon warning error_handler
 #include "logger.h"
 #include "custom_ranging_sensor.h"
 

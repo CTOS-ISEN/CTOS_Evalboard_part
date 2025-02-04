@@ -8,8 +8,7 @@
 #ifndef MEMS_LIBRARY_MEMS_LIBRARY_H_
 #define MEMS_LIBRARY_MEMS_LIBRARY_H_
 
-#include <stdio.h>
-#include "main.h"
+#include "stdio.h"
 #include "stm32wbxx_nucleo_errno.h"
 #include "lsm6dso.h"
 #include "lis2mdl.h"
@@ -41,10 +40,10 @@ typedef struct{
 
 void MyInitLSM6DSO(void);
 void MyEnableLSM6DSO(void);
-void MyGettingLSM6DSO(LSM6DSO_Axes_t *Acc, LSM6DSO_Axes_t *Gyr);
 void MyInitLIS2MDL(void);
 void MyEnableLIS2MDL(void);
-void MyGettingLIS2MDL(LIS2MDL_Axes_t *Magn);
+
+void GettingIMUInfo(IMU_Data *data);
 
 
 #endif /* MEMS_LIBRARY_MEMS_LIBRARY_H_ */

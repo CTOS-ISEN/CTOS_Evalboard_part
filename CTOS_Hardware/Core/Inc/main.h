@@ -29,13 +29,16 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 #include "stm32wbxx_hal.h"
 
+#include "app_conf.h"
+#include "app_entry.h"
+#include "app_common.h"
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "ToF_library.h"
-#include "MEMS_library.h"
+#include "ToF_library.h"	//include deja ranging_sensor
 #include "SD_library.h"
-#include "custom_ranging_sensor.h"
-#include "Config.h"
+//#include "custom_ranging_sensor.h"
+#include "Config.h"	//include deja MEMS et ranging_sensor
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -90,6 +93,7 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN Private defines */
 #define SD_SPI_HANDLE hspi2
+extern uint16_t print_flag;
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
