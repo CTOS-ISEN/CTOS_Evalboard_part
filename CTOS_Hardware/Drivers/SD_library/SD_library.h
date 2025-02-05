@@ -8,9 +8,8 @@
 #ifndef SD_LIBRARY_SD_LIBRARY_H_
 #define SD_LIBRARY_SD_LIBRARY_H_
 
-#include "main.h"
-#include "config.h"
-#include "custom_ranging_sensor.h"
+//#include "main.h" //inutile
+#include "Config.h"
 
 
 void SD_mount(void);

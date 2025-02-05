@@ -9,16 +9,11 @@
 #define CONFIG_CONFIG_H_
 
 #include "custom_ranging_sensor.h"
+#include "MEMS_library.h"
 
-typedef struct {
+typedef struct{
+	IMU_Data inertialValue;
     RANGING_SENSOR_Result_t distance;
-    int32_t AccX;
-    int32_t AccY;
-    int32_t AccZ;
-
-    int32_t GyroX;
-    int32_t GyroY;
-    int32_t GyroZ;
-} mesure;
+}mesure;
 
 #endif /* CONFIG_CONFIG_H_ */

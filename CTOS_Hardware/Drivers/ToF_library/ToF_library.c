@@ -128,11 +128,11 @@ void logger_print_result(RANGING_SENSOR_Result_t *Result)
 
   for (i = 0; i < RANGING_SENSOR_MAX_NB_ZONES; i++)
   {
-    log_printf("\nTargets = %lu", (unsigned long)Result->ZoneResult[i].NumberOfTargets);
+    log_printf("\nTargets = %lu\n\r", (unsigned long)Result->ZoneResult[i].NumberOfTargets);
 
     for (j = 0; j < Result->ZoneResult[i].NumberOfTargets; j++)
     {
-      log_printf("\n |---> ");
+      log_printf("\t |---> ");
 
       log_printf("Status = %ld, Distance = %5ld mm ",
              (long)Result->ZoneResult[i].Status[j],
@@ -147,9 +147,11 @@ void logger_print_result(RANGING_SENSOR_Result_t *Result)
         log_printf(", Signal = %ld.%02ld kcps/spad",
                (long)Result->ZoneResult[i].Signal[j],
                (long)decimal_part(Result->ZoneResult[i].Signal[j]));
+
+      log_printf("\n\r");
     }
   }
-  log_printf("\n");
+  log_printf("\n\r");
 }
 
 static int32_t decimal_part(float_t x)

@@ -71,24 +71,24 @@ void SD_write_data(const char* file_name, mesure* data) {
                                "      Target %lu:\n"
                                "        Distance: %lu mm\n"
                                "        Status: %lu\n"
-                               "        Ambient: %.2f kcps/spad\n"
-                               "        Signal: %.2f kcps/spad\n",
+                               "        Ambient: %.2f kcps/spad\n",
+                               //"        Signal: %.2f kcps/spad\n",
                                target + 1,
                                zoneResult->Distance[target],
                                zoneResult->Status[target],
-                               zoneResult->Ambient[target],
-                               zoneResult->Signal[target]);
+                               zoneResult->Ambient[target]);
+                               //zoneResult->Signal[target]);
         }
     }
 
     // Write the position and velocity
     offset += snprintf(buffer + offset, sizeof(buffer) - offset,
                        "Acceleration:\n  X: %ld\n  Y: %ld\n  Z: %ld\n",
-                       data->AccX, data->AccY, data->AccZ);
+                       data->inertialValue.Acc.x, data->inertialValue.Acc.y, data->inertialValue.Acc.z);
 
     offset += snprintf(buffer + offset, sizeof(buffer) - offset,
                        "Gyro:\n  X: %ld\n  Y: %ld\n  Z: %ld\n",
-                       data->GyroX, data->GyroY, data->GyroZ);
+					   data->inertialValue.Gyr.x, data->inertialValue.Gyr.y, data->inertialValue.Gyr.z);
 
     // Write the formatted data to the file
     UINT bytesWritten;
@@ -155,8 +155,8 @@ void SD_read_data(const char* file_name, mesure* data, uint32_t measure_index) {
                 }
 
                 // Analyser la position et la vitesse
-                sscanf(ptr, "%*[^P]Acceleration:\n  X: %ld\n  Y: %ld\n  Z: %ld\n", &data->AccX, &data->AccY, &data->AccZ);
-                sscanf(ptr, "%*[^V]Gyro:\n  X: %ld\n  Y: %ld\n  Z: %ld\n", &data->GyroX, &data->GyroY, &data->GyroZ);
+                sscanf(ptr, "%*[^P]Acceleration:\n  X: %ld\n  Y: %ld\n  Z: %ld\n", &data->inertialValue.Acc.x, &data->inertialValue.Acc.y, &data->inertialValue.Acc.z);
+                sscanf(ptr, "%*[^V]Gyro:\n  X: %ld\n  Y: %ld\n  Z: %ld\n",  &data->inertialValue.Gyr.x, &data->inertialValue.Gyr.y, &data->inertialValue.Gyr.z);
                 //printf("Position: X: %.2f, Y: %.2f, Z: %.2f\n", data->posX, data->posY, data->posZ);
                 //printf("Velocity: X: %.2f, Y: %.2f, Z: %.2f\n", data->vX, data->vY, data->vZ);
 
