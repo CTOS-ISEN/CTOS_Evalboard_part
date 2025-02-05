@@ -344,7 +344,7 @@ tBleStatus Custom_STM_App_Update_Char(Custom_STM_Char_Opcode_t CharOpcode, uint8
       /* USER CODE BEGIN CUSTOM_STM_App_Update_Service_1_Char_1*/
 
       if(pPayload[0] == 0xAB) {
-    	  print_flag = print_flag == 0 ? 1 : 0;
+    	  startStop_flag = startStop_flag == 0 ? 1 : 0;
 
       }
       /* USER CODE END CUSTOM_STM_App_Update_Service_1_Char_1*/

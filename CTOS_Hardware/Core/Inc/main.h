@@ -93,7 +93,7 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN Private defines */
 #define SD_SPI_HANDLE hspi2
-extern uint16_t print_flag;
+extern uint16_t startStop_flag;
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

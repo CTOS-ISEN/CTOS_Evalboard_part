@@ -103,8 +103,7 @@ typedef enum {
 
 int16_t actual_state = 0;
 int16_t target_state = 0;
-uint16_t print_flag = 0;
-
+uint16_t startStop_flag = 0;
 FSM_States_Enum current_state = STATE_START;
 ExecutionState_Enum execution_state = NOT_EXECUTED;
 
@@ -138,42 +137,34 @@ void state_start(void) {
  * @Brief
  */
 void state_ack_tof(void) {
-	mesure data;
-	ToF_acquire_data(&data.distance);
-
-	// Stocker les données dans une variable globale ou une structure partagée
-	global_mesure_data = data;
+	ToF_acquire_data(&global_mesure_data.distance);
 }
 
 void state_ack_gnss(void) {
-	IMU_Data mov_data;
-	GettingIMUInfo(&mov_data);
-	// Stocker les données dans une variable globale ou une structure partagée
-	global_imu_data = mov_data;
+	GettingIMUInfo(&global_mesure_data.inertialValue);
 }
 
 void state_send(void) {
-	if (print_flag == 1) {
-		// Récupérer les données stockées
-		mesure current_mesure = global_mesure_data;
-		IMU_Data mov_data = global_imu_data;
+	// Récupérer les données stockées
+	mesure current_mesure = global_mesure_data;
+//	IMU_Data mov_data = global_imu_data;
 
-		current_mesure.inertialValue.Acc.x = mov_data.Acc.x;
-		current_mesure.inertialValue.Acc.y = mov_data.Acc.y;
-		current_mesure.inertialValue.Acc.z = mov_data.Acc.z;
+/*	current_mesure.inertialValue.Acc.x = mov_data.Acc.x;
+	current_mesure.inertialValue.Acc.y = mov_data.Acc.y;
+	current_mesure.inertialValue.Acc.z = mov_data.Acc.z;
 
-		current_mesure.inertialValue.Gyr.x = mov_data.Gyr.x;
-		current_mesure.inertialValue.Gyr.y = mov_data.Gyr.y;
-		current_mesure.inertialValue.Gyr.z = mov_data.Gyr.z;
+	current_mesure.inertialValue.Gyr.x = mov_data.Gyr.x;
+	current_mesure.inertialValue.Gyr.y = mov_data.Gyr.y;
+	current_mesure.inertialValue.Gyr.z = mov_data.Gyr.z;*/
 
-		logger_print_result(&current_mesure.distance);
-		log_printf("Acceleration : X : %ld | Y : %ld | Z : %ld\n\r",
-				current_mesure.inertialValue.Acc.x, current_mesure.inertialValue.Acc.y, current_mesure.inertialValue.Acc.z);
-		log_printf("Gyroscope: X: %ld | Y: %ld | Z: %ld\n\r", current_mesure.inertialValue.Gyr.x,
-				current_mesure.inertialValue.Gyr.y, current_mesure.inertialValue.Gyr.z);
-		log_printf("Magnetoscope: X: %ld | Y: %ld | Z: %ld\n\r", mov_data.Mag.x,
-				mov_data.Mag.y, mov_data.Mag.z);
-	}
+	logger_print_result(&current_mesure.distance);
+	log_printf("Acceleration : X : %ld | Y : %ld | Z : %ld\n\r",
+			current_mesure.inertialValue.Acc.x, current_mesure.inertialValue.Acc.y, current_mesure.inertialValue.Acc.z);
+	log_printf("Gyroscope: X: %ld | Y: %ld | Z: %ld\n\r", current_mesure.inertialValue.Gyr.x,
+			current_mesure.inertialValue.Gyr.y, current_mesure.inertialValue.Gyr.z);
+	log_printf("Magnetoscope: X: %ld | Y: %ld | Z: %ld\n\r", current_mesure.inertialValue.Mag.x,
+			current_mesure.inertialValue.Mag.y, current_mesure.inertialValue.Mag.z);
+
 
 	//SD_mount();
 	//SD_status();
@@ -207,7 +198,7 @@ void fsm_project(void) {
 	switch (current_state) {
 
 	case STATE_START:
-		set_new_state(STATE_ACK_TOF);
+		if(startStop_flag == 1) set_new_state(STATE_ACK_TOF);
 		break;
 
 	case STATE_ACK_TOF:
@@ -219,7 +210,7 @@ void fsm_project(void) {
 		break;
 
 	case STATE_SEND:
-		set_new_state(STATE_ACK_TOF);
+		set_new_state(STATE_START);
 		break;
 
 	}
@@ -274,7 +265,7 @@ int main(void) {
 	}
 	MX_RTC_Init();
 	/* USER CODE BEGIN 2 */
-	print_flag = 0;
+	startStop_flag = 0;
 	init_fsm();
 	log_init(&huart1);
 	ToF_init();
