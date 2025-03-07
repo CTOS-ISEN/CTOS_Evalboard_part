@@ -413,15 +413,8 @@ tBleStatus Custom_STM_App_Update_Char(Custom_STM_Char_Opcode_t CharOpcode, uint8
         APP_DBG_MSG("  Success: aci_gatt_update_char_value RV command\n\r");
       }
       /* USER CODE BEGIN CUSTOM_STM_App_Update_Service_1_Char_2*/
-      if(pPayload[0] == 0xAC) {
-    	  startACK_flag = 0;
-    	  startSEND_flag = 1;
-
-      }
-      if (ret != BLE_STATUS_SUCCESS)
-      {
-          log_printf("ret : %c", ret);
-      }
+	  startACK_flag = 0;
+	  startSEND_flag = 1;
 
 
 

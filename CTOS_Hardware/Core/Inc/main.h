@@ -92,6 +92,16 @@ void Error_Handler(void);
 #define STLINK_TX_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
+typedef enum {
+	STATE_HANDLER, STATE_ACK_TOF, STATE_ACK_GNSS, STATE_SEND
+} FSM_States_Enum;
+
+typedef enum {
+	NOT_EXECUTED, EXECUTED,
+} ExecutionState_Enum;
+
+
+
 #define SD_SPI_HANDLE hspi2
 extern uint16_t startACK_flag;
 extern uint16_t startSEND_flag;

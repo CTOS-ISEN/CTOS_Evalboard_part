@@ -96,13 +96,6 @@ static void MX_CRC_Init(void);
 
 float deltaTime_IMU = (uint8_t) (deltaTime_tof / nb_IMUData_MAX);
 
-typedef enum {
-	STATE_START, STATE_ACK_TOF, STATE_ACK_GNSS, STATE_SEND
-} FSM_States_Enum;
-
-typedef enum {
-	NOT_EXECUTED, EXECUTED,
-} ExecutionState_Enum;
 
 int16_t actual_state = 0;
 int16_t target_state = 0;
@@ -110,7 +103,7 @@ uint16_t startACK_flag = 0;
 uint16_t startSEND_flag = 0;
 uint8_t *txt_to_send =
 		"Lorem ipsum odor amet, consectetuer adipiscing elit. Fringilla in magnis potenti; convallis ad nec sollicitudin. Laoreet platea venenatis mauris morbi tempus odio eu. Pellentesque justo viverra vel tempus mattis parturient malesuada. Dignissim massa quam dis duis, nunc lobortis senectus? Neque aliquam suspendisse tincidunt mus aenean laoreet condimentum justo vivamus. Conubia velit volutpat maximus, vivamus ridiculus taciti habitasse. Ex elit cras;";
-FSM_States_Enum current_state = STATE_START;
+FSM_States_Enum current_state = STATE_HANDLER;
 ExecutionState_Enum execution_state = NOT_EXECUTED;
 
 void (*state_callbacks[5])(void);
@@ -185,12 +178,12 @@ void init_fsm(void) {
 	actual_state = 0;
 	target_state = 0;
 
-	state_callbacks[STATE_START] = state_start;
+	state_callbacks[STATE_HANDLER] = state_start;
 	state_callbacks[STATE_ACK_TOF] = state_ack_tof;
 	state_callbacks[STATE_ACK_GNSS] = state_ack_gnss;
 	state_callbacks[STATE_SEND] = state_send;
 
-	set_new_state(STATE_START);
+	set_new_state(STATE_HANDLER);
 }
 
 /**
@@ -203,9 +196,10 @@ void fsm_project(void) {
 
 	switch (current_state) {
 
-	case STATE_START:
-		if (startACK_flag == 1)
+	case STATE_HANDLER:
+		if (startACK_flag == 1){
 			set_new_state(STATE_ACK_TOF);
+		}
 		break;
 
 	case STATE_ACK_TOF:
@@ -217,7 +211,7 @@ void fsm_project(void) {
 		break;
 
 	case STATE_SEND:
-		set_new_state(STATE_START);
+		set_new_state(STATE_HANDLER);
 		break;
 
 	}
