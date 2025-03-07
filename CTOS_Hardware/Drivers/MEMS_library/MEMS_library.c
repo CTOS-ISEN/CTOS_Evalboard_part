@@ -10,6 +10,11 @@
 static LSM6DSO_Object_t lsm6dso_obj_0;
 static LIS2MDL_Object_t lis2mdl_obj_0;
 
+float LastTime = 0;
+char lib_version[MFX_STR_LENG];
+static uint8_t mfxstate[STATE_SIZE];
+MFX_knobs_t iKnobs;
+
 void MyInitLSM6DSO(void){
 	LSM6DSO_IO_t io_ctx;
 	io_ctx.BusType     = LSM6DSO_I2C_BUS;
@@ -54,4 +59,62 @@ void GettingIMUInfo(IMU_Data *data){
 	LSM6DSO_ACC_GetAxes(&lsm6dso_obj_0,  &(data->Acc));
 	LSM6DSO_GYRO_GetAxes(&lsm6dso_obj_0,  &(data->Gyr));
 	LIS2MDL_MAG_GetAxes(&lis2mdl_obj_0, &(data->Mag));
+
+	MotionFXCompute(data);
+}
+
+
+
+void MotionFXInit(void){
+	if(STATE_SIZE < MotionFX_GetStateSize()){
+		Error_Handler();
+	}
+	  /* Sensor Fusion API initialization function */
+	MotionFX_initialize((MFXState_t *)mfxstate);
+	  /* Optional: Get version */
+	MotionFX_GetLibVersion(lib_version);
+	  /* Modify knobs settings & set the knobs */
+	MotionFX_getKnobs(mfxstate, &iKnobs);
+	MotionFX_setKnobs(mfxstate, &iKnobs);
+	MotionFX_enable_6X(mfxstate, MFX_ENGINE_DISABLE);
+	MotionFX_enable_9X(mfxstate, MFX_ENGINE_DISABLE);
+
+	  /* Enable 9-axis sensor fusion */
+	if (ENABLE_6X == 1){
+		MotionFX_enable_6X(mfxstate, MFX_ENGINE_ENABLE);
+	}
+	else{
+		MotionFX_enable_9X(mfxstate, MFX_ENGINE_ENABLE);
+	}
+}
+
+void MotionFXCompute(IMU_Data *data){
+	MFX_input_t data_in;
+	MFX_output_t data_out;
+	float dT;
+	float CurrentTime;
+	float *q;
+
+	data_in.acc[0] = (float)(data->Acc.x)/1000;
+	data_in.acc[1] = (float)(data->Acc.y)/1000;
+	data_in.acc[2] = (float)(data->Acc.z)/1000;
+
+	data_in.gyro[0] = (float)(data->Gyr.x)/1000;
+	data_in.gyro[1] = (float)(data->Gyr.y)/1000;
+	data_in.gyro[2] = (float)(data->Gyr.z)/1000;
+
+	data_in.mag[0] = (float)(data->Mag.x)/500;
+	data_in.mag[1] = (float)(data->Mag.y)/500;
+	data_in.mag[2] = (float)(data->Mag.z)/500;
+
+	CurrentTime = (float)HAL_GetTick();
+	dT = (CurrentTime - LastTime)/1000;
+	LastTime = CurrentTime;
+
+	MotionFX_propagate(mfxstate, &data_out, &data_in, &dT);
+	MotionFX_update(mfxstate, &data_out, &data_in, &dT, NULL);
+
+	q = data_out.quaternion;
+
+	log_printf("DONT CARE: Yaw : %f | Pitch : %f | Roll : %f\r\n", data_out.rotation[0], data_out.rotation[1], data_out.rotation[2]);
 }

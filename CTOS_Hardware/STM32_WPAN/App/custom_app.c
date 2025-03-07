@@ -96,17 +96,18 @@ void Custom_STM_App_Notification(Custom_STM_App_Notification_evt_t *pNotificatio
     /* USER CODE END CUSTOM_STM_App_Notification_Custom_Evt_Opcode */
 
     /* start_survey */
-    case CUSTOM_STM_CV_READ_EVT:
-      /* USER CODE BEGIN CUSTOM_STM_CV_READ_EVT */
-    	//telephone veut des info
-      /* USER CODE END CUSTOM_STM_CV_READ_EVT */
-      break;
-
     case CUSTOM_STM_CV_WRITE_NO_RESP_EVT:
       /* USER CODE BEGIN CUSTOM_STM_CV_WRITE_NO_RESP_EVT */
     	//telephone envoie des infos
     	Custom_STM_App_Update_Char(CUSTOM_STM_CV, (uint8_t *)UpdateCharData);
       /* USER CODE END CUSTOM_STM_CV_WRITE_NO_RESP_EVT */
+      break;
+
+    case CUSTOM_STM_RV_READ_EVT:
+      /* USER CODE BEGIN CUSTOM_STM_RV_READ_EVT */
+    	uint8_t* test ="ta";
+    	Custom_STM_App_Update_Char(CUSTOM_STM_RV, (uint8_t *)txt_to_send);
+      /* USER CODE END CUSTOM_STM_RV_READ_EVT */
       break;
 
     case CUSTOM_STM_NOTIFICATION_COMPLETE_EVT:

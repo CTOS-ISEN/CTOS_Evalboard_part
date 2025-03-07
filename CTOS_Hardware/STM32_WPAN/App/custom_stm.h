@@ -36,13 +36,15 @@ typedef enum
 {
   /* start_survey */
   CUSTOM_STM_CV,
+  CUSTOM_STM_RV,
 } Custom_STM_Char_Opcode_t;
 
 typedef enum
 {
   /* check_validation */
-  CUSTOM_STM_CV_READ_EVT,
   CUSTOM_STM_CV_WRITE_NO_RESP_EVT,
+  /* retrieve_validation */
+  CUSTOM_STM_RV_READ_EVT,
   CUSTOM_STM_NOTIFICATION_COMPLETE_EVT,
 
   CUSTOM_STM_BOOT_REQUEST_EVT
@@ -69,6 +71,7 @@ typedef struct
 
 /* Exported constants --------------------------------------------------------*/
 extern uint16_t SizeCv;
+extern uint16_t SizeRv;
 
 /* USER CODE BEGIN EC */
 

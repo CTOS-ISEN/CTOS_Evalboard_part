@@ -13,6 +13,8 @@
 #include "lsm6dso.h"
 #include "lis2mdl.h"
 #include "stm32wbxx_nucleo_bus.h"
+#include "motion_fx.h"
+#include "logger.h"
 
 #define LSM6DSO_I2C_BUS 0U
 #define LSM6DSO_I2C_ADD_H 0xD7
@@ -32,6 +34,11 @@
 #define LIS2MDL_GET_TICK BSP_GetTick
 #define LIS2MDL_DELAY HAL_Delay
 
+#define MFX_STR_LENG 35
+#define STATE_SIZE (size_t)(2450)
+#define ENABLE_6X 0
+
+
 typedef struct{
 	LSM6DSO_Axes_t Acc;
 	LSM6DSO_Axes_t Gyr;
@@ -44,6 +51,8 @@ void MyInitLIS2MDL(void);
 void MyEnableLIS2MDL(void);
 
 void GettingIMUInfo(IMU_Data *data);
+void MotionFXInit(void);
+void MotionFXCompute(IMU_Data *data);
 
 
 #endif /* MEMS_LIBRARY_MEMS_LIBRARY_H_ */
