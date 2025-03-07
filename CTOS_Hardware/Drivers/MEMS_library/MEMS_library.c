@@ -116,5 +116,7 @@ void MotionFXCompute(IMU_Data *data){
 
 	q = data_out.quaternion;
 
-	log_printf("DONT CARE: Yaw : %f | Pitch : %f | Roll : %f\r\n", data_out.rotation[0], data_out.rotation[1], data_out.rotation[2]);
+	data->yaw = data_out.rotation[0];
+	data->pitch = data_out.rotation[1];
+	data->roll = data_out.rotation[2];
 }

@@ -43,6 +43,10 @@ typedef struct{
 	LSM6DSO_Axes_t Acc;
 	LSM6DSO_Axes_t Gyr;
 	LIS2MDL_Axes_t Mag;
+
+	float yaw;
+	float pitch;
+	float roll;
 }IMU_Data;
 
 void MyInitLSM6DSO(void);
