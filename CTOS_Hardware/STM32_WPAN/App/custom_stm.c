@@ -124,7 +124,6 @@ static SVCCTL_EvtAckStatus_t Custom_STM_Event_Handler(void *Event)
   hci_event_pckt *event_pckt;
   evt_blecore_aci *blecore_evt;
   aci_gatt_attribute_modified_event_rp0 *attribute_modified;
-  aci_gatt_read_permit_req_event_rp0    *read_req;
   aci_gatt_notification_complete_event_rp0    *notification_complete;
   Custom_STM_App_Notification_evt_t     Notification;
   /* USER CODE BEGIN Custom_STM_Event_Handler_1 */
@@ -145,7 +144,51 @@ static SVCCTL_EvtAckStatus_t Custom_STM_Event_Handler(void *Event)
 
           /* USER CODE END EVT_BLUE_GATT_ATTRIBUTE_MODIFIED_BEGIN */
           attribute_modified = (aci_gatt_attribute_modified_event_rp0*)blecore_evt->data;
-          if (attribute_modified->Attr_Handle == (CustomContext.CustomCvHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))
+          if (attribute_modified->Attr_Handle == (CustomContext.CustomRvHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))
+          {
+            return_value = SVCCTL_EvtAckFlowEnable;
+            /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_2 */
+
+            /* USER CODE END CUSTOM_STM_Service_1_Char_2 */
+            switch (attribute_modified->Attr_Data[0])
+            {
+              /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_2_attribute_modified */
+
+              /* USER CODE END CUSTOM_STM_Service_1_Char_2_attribute_modified */
+
+              /* Disabled Notification management */
+              case (!(COMSVC_Notification)):
+                /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_2_Disabled_BEGIN */
+
+                /* USER CODE END CUSTOM_STM_Service_1_Char_2_Disabled_BEGIN */
+                Notification.Custom_Evt_Opcode = CUSTOM_STM_RV_NOTIFY_DISABLED_EVT;
+                Custom_STM_App_Notification(&Notification);
+                /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_2_Disabled_END */
+
+                /* USER CODE END CUSTOM_STM_Service_1_Char_2_Disabled_END */
+                break;
+
+              /* Enabled Notification management */
+              case COMSVC_Notification:
+                /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_2_COMSVC_Notification_BEGIN */
+
+                /* USER CODE END CUSTOM_STM_Service_1_Char_2_COMSVC_Notification_BEGIN */
+                Notification.Custom_Evt_Opcode = CUSTOM_STM_RV_NOTIFY_ENABLED_EVT;
+                Custom_STM_App_Notification(&Notification);
+                /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_2_COMSVC_Notification_END */
+
+                /* USER CODE END CUSTOM_STM_Service_1_Char_2_COMSVC_Notification_END */
+                break;
+
+              default:
+                /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_2_default */
+
+                /* USER CODE END CUSTOM_STM_Service_1_Char_2_default */
+              break;
+            }
+          }  /* if (attribute_modified->Attr_Handle == (CustomContext.CustomRvHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))*/
+
+          else if (attribute_modified->Attr_Handle == (CustomContext.CustomCvHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))
           {
             return_value = SVCCTL_EvtAckFlowEnable;
             /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_1_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
@@ -164,21 +207,6 @@ static SVCCTL_EvtAckStatus_t Custom_STM_Event_Handler(void *Event)
           /* USER CODE BEGIN EVT_BLUE_GATT_READ_PERMIT_REQ_BEGIN */
 
           /* USER CODE END EVT_BLUE_GATT_READ_PERMIT_REQ_BEGIN */
-          read_req = (aci_gatt_read_permit_req_event_rp0*)blecore_evt->data;
-          if (read_req->Attribute_Handle == (CustomContext.CustomRvHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))
-          {
-            return_value = SVCCTL_EvtAckFlowEnable;
-            /*USER CODE BEGIN CUSTOM_STM_Service_1_Char_2_ACI_GATT_READ_PERMIT_REQ_VSEVT_CODE_1 */
-            Notification.Custom_Evt_Opcode = CUSTOM_STM_RV_READ_EVT;
-			Notification.DataTransfered.Length=attribute_modified->Attr_Data_Length;
-			Notification.DataTransfered.pPayload=attribute_modified->Attr_Data;
-			Custom_STM_App_Notification(&Notification);
-            /*USER CODE END CUSTOM_STM_Service_1_Char_2_ACI_GATT_READ_PERMIT_REQ_VSEVT_CODE_1*/
-            aci_gatt_allow_read(read_req->Connection_Handle);
-            /*USER CODE BEGIN CUSTOM_STM_Service_1_Char_2_ACI_GATT_READ_PERMIT_REQ_VSEVT_CODE_2 */
-
-            /*USER CODE END CUSTOM_STM_Service_1_Char_2_ACI_GATT_READ_PERMIT_REQ_VSEVT_CODE_2*/
-          } /* if (read_req->Attribute_Handle == (CustomContext.CustomRvHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))*/
           /* USER CODE BEGIN EVT_BLUE_GATT_READ_PERMIT_REQ_END */
 
           /* USER CODE END EVT_BLUE_GATT_READ_PERMIT_REQ_END */
@@ -270,12 +298,13 @@ void SVCCTL_InitCustomSvc(void)
    * service_max_attribute_record = 1 for start_survey +
    *                                2 for check_validation +
    *                                2 for retrieve_validation +
-   *                              = 5
+   *                                1 for retrieve_validation configuration descriptor +
+   *                              = 6
    *
    * This value doesn't take into account number of descriptors manually added
    * In case of descriptors added, please update the max_attr_record value accordingly in the next SVCCTL_InitService User Section
    */
-  max_attr_record = 5;
+  max_attr_record = 6;
 
   /* USER CODE BEGIN SVCCTL_InitService */
   /* max_attr_record to be updated if descriptors have been added */
@@ -330,9 +359,9 @@ void SVCCTL_InitCustomSvc(void)
   ret = aci_gatt_add_char(CustomContext.CustomSsHdle,
                           UUID_TYPE_128, &uuid,
                           SizeRv,
-                          CHAR_PROP_READ,
-                          ATTR_PERMISSION_AUTHEN_READ | ATTR_PERMISSION_AUTHOR_READ,
-                          GATT_NOTIFY_ATTRIBUTE_WRITE | GATT_NOTIFY_READ_REQ_AND_WAIT_FOR_APPL_RESP,
+                          CHAR_PROP_NOTIFY,
+                          ATTR_PERMISSION_NONE,
+                          GATT_NOTIFY_ATTRIBUTE_WRITE,
                           0x10,
                           CHAR_VALUE_LEN_CONSTANT,
                           &(CustomContext.CustomRvHdle));
