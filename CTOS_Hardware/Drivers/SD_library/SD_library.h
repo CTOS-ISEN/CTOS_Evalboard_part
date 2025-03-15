@@ -9,7 +9,7 @@
 #define SD_LIBRARY_SD_LIBRARY_H_
 
 //#include "main.h" //inutile
-//#include "Config.h"
+#include "Config.h"
 
 
 void SD_Init();

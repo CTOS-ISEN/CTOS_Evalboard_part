@@ -107,9 +107,9 @@ void set_new_state(FSM_States_Enum new_state) {
 	current_state = new_state;
 	if (new_state == STATE_ACK_TOF)
 		actual_state = 0;
-	if (new_state == STATE_ACK_GNSS)
+	if (new_state == STATE_ACK_IMU)
 		actual_state = 1;
-	if (new_state == STATE_SEND)
+	if (new_state == STATE_STORE)
 		actual_state = 2;
 	execution_state = NOT_EXECUTED;
 }
@@ -130,33 +130,37 @@ void state_ack_tof(void) {
 	ToF_acquire_data(&global_mesure_data.distance);
 }
 
-void state_ack_gnss(void) {
+void state_ack_imu(void) {
 	GettingIMUInfo(&global_mesure_data.inertialValue);
 }
 
-void state_send(void) {
+void state_store(void) {
 	// Récupérer les données stockées
-	mesure current_mesure = global_mesure_data;
+	//mesure current_mesure = global_mesure_data;
 
-	logger_print_result(&current_mesure.distance);
+	logger_print_result(&global_mesure_data.distance);
 	log_printf("Acceleration : X : %ld | Y : %ld | Z : %ld\n\r",
-			current_mesure.inertialValue.Acc.x,
-			current_mesure.inertialValue.Acc.y,
-			current_mesure.inertialValue.Acc.z);
+			global_mesure_data.inertialValue.Acc.x,
+			global_mesure_data.inertialValue.Acc.y,
+			global_mesure_data.inertialValue.Acc.z);
 	log_printf("Gyroscope: X: %ld | Y: %ld | Z: %ld\n\r",
-			current_mesure.inertialValue.Gyr.x,
-			current_mesure.inertialValue.Gyr.y,
-			current_mesure.inertialValue.Gyr.z);
+			global_mesure_data.inertialValue.Gyr.x,
+			global_mesure_data.inertialValue.Gyr.y,
+			global_mesure_data.inertialValue.Gyr.z);
 	log_printf("Magnetoscope: X: %ld | Y: %ld | Z: %ld\n\r",
-			current_mesure.inertialValue.Mag.x,
-			current_mesure.inertialValue.Mag.y,
-			current_mesure.inertialValue.Mag.z);
+			global_mesure_data.inertialValue.Mag.x,
+			global_mesure_data.inertialValue.Mag.y,
+			global_mesure_data.inertialValue.Mag.z);
 
 	log_printf("Angles: Yaw : %f | Pitch : %f | Roll : %f\r\n",
-			current_mesure.inertialValue.yaw,
-			current_mesure.inertialValue.pitch,
-			current_mesure.inertialValue.roll);
+			global_mesure_data.inertialValue.yaw,
+			global_mesure_data.inertialValue.pitch,
+			global_mesure_data.inertialValue.roll);
 
+
+//	start_fileWriting();
+//	write_object(&global_mesure_data);
+//	end_fileWriting();
 }
 
 /**
@@ -168,8 +172,8 @@ void init_fsm(void) {
 
 	state_callbacks[STATE_HANDLER] = state_start;
 	state_callbacks[STATE_ACK_TOF] = state_ack_tof;
-	state_callbacks[STATE_ACK_GNSS] = state_ack_gnss;
-	state_callbacks[STATE_SEND] = state_send;
+	state_callbacks[STATE_ACK_IMU] = state_ack_imu;
+	state_callbacks[STATE_STORE] = state_store;
 
 	set_new_state(STATE_HANDLER);
 }
@@ -191,14 +195,14 @@ void fsm_project(void) {
 		break;
 
 	case STATE_ACK_TOF:
-		set_new_state(STATE_ACK_GNSS);
+		set_new_state(STATE_ACK_IMU);
 		break;
 
-	case STATE_ACK_GNSS:
-		set_new_state(STATE_SEND);
+	case STATE_ACK_IMU:
+		set_new_state(STATE_STORE);
 		break;
 
-	case STATE_SEND:
+	case STATE_STORE:
 		set_new_state(STATE_HANDLER);
 		break;
 
@@ -267,21 +271,13 @@ int main(void) {
 
 	//calibration for imu
 	for (int i = 0; i < 20; i++) {
-		state_ack_gnss();
+		state_ack_imu();
 	}
 
 
-	/*test sd card*/
-	SD_mount();
-	start_fileWriting();
 
-	for (int i = 0; i < 10; i++) {
-		write_object();
-	}
-	end_fileWriting();
-	read_file();
-	SD_unMount();
-	/*test sd card*/
+//	SD_mount();
+//	SD_unMount();
 
 	HAL_TIM_Base_Start_IT(&htim16);
 	/* USER CODE END 2 */

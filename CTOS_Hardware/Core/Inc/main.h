@@ -95,7 +95,7 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN Private defines */
 typedef enum {
-	STATE_HANDLER, STATE_ACK_TOF, STATE_ACK_GNSS, STATE_SEND
+	STATE_HANDLER, STATE_ACK_TOF, STATE_ACK_IMU, STATE_STORE
 } FSM_States_Enum;
 
 typedef enum {
