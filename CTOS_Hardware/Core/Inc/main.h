@@ -39,6 +39,8 @@ extern "C" {
 #include "SD_library.h"
 //#include "custom_ranging_sensor.h"
 #include "Config.h"	//include deja MEMS et ranging_sensor
+#include "stdio.h"
+#include "stdlib.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

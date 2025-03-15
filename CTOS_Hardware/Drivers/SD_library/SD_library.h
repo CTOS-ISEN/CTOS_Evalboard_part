@@ -9,14 +9,13 @@
 #define SD_LIBRARY_SD_LIBRARY_H_
 
 //#include "main.h" //inutile
-#include "Config.h"
+//#include "Config.h"
 
 
-void SD_mount(void);
+void SD_Init();
+void SD_deInit(void);
 void SD_status(void);
-void SD_write_data(const char* file_name, mesure* data);
-void SD_read_data(const char* file_name, mesure* data, uint32_t measure_index);
-uint32_t SD_count_measures(const char* file_name);
-void SD_demount(void);
+void SD_write_object();
+void SD_read_data();
 
 #endif /* SD_LIBRARY_SD_LIBRARY_H_ */
