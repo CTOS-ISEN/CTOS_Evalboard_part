@@ -361,7 +361,7 @@ void SVCCTL_InitCustomSvc(void)
                           SizeRv,
                           CHAR_PROP_NOTIFY,
                           ATTR_PERMISSION_NONE,
-                          GATT_NOTIFY_ATTRIBUTE_WRITE,
+                          GATT_DONT_NOTIFY_EVENTS,
                           0x10,
                           CHAR_VALUE_LEN_CONSTANT,
                           &(CustomContext.CustomRvHdle));

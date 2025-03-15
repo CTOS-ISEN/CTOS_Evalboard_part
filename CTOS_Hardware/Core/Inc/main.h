@@ -41,6 +41,7 @@ extern "C" {
 #include "Config.h"	//include deja MEMS et ranging_sensor
 #include "stdio.h"
 #include "stdlib.h"
+#include "custom_app.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -95,7 +96,7 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN Private defines */
 typedef enum {
-	STATE_HANDLER, STATE_ACK_TOF, STATE_ACK_IMU, STATE_STORE
+	STATE_HANDLER, STATE_ACK_TOF, STATE_ACK_IMU, STATE_STORE, STATE_SEND
 } FSM_States_Enum;
 
 typedef enum {

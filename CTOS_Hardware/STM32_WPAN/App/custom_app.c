@@ -111,17 +111,13 @@ void Custom_STM_App_Notification(Custom_STM_App_Notification_evt_t *pNotificatio
       /* USER CODE BEGIN CUSTOM_STM_RV_NOTIFY_ENABLED_EVT */
 		startSEND_flag = 1;
 		startACK_flag = 0;
-		for(int i=0; i<5; i++){
-			NotifyCharData[0] = i;
-			Custom_Rv_Send_Notification();
-			HAL_Delay(1000);
-		}
+		Custom_BleSendNotification("50");
       /* USER CODE END CUSTOM_STM_RV_NOTIFY_ENABLED_EVT */
       break;
 
     case CUSTOM_STM_RV_NOTIFY_DISABLED_EVT:
       /* USER CODE BEGIN CUSTOM_STM_RV_NOTIFY_DISABLED_EVT */
-
+		startSEND_flag = 0;
       /* USER CODE END CUSTOM_STM_RV_NOTIFY_DISABLED_EVT */
       break;
 
@@ -242,5 +238,13 @@ void Custom_Rv_Send_Notification(void) /* Property Notification */
 }
 
 /* USER CODE BEGIN FD_LOCAL_FUNCTIONS*/
+void Custom_BleSendNotification(uint8_t *data) {
 
+	if (startSEND_flag != 0) {
+		strncat(NotifyCharData, data, 512);
+		Custom_STM_App_Update_Char_Ext(Connection_Handle, CUSTOM_STM_RV,
+				(uint8_t*) NotifyCharData);
+	}
+
+}
 /* USER CODE END FD_LOCAL_FUNCTIONS*/
