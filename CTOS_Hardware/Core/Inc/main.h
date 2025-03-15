@@ -41,7 +41,6 @@ extern "C" {
 #include "Config.h"	//include deja MEMS et ranging_sensor
 #include "stdio.h"
 #include "stdlib.h"
-#include "custom_app.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

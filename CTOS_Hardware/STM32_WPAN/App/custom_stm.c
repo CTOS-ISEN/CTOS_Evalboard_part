@@ -66,7 +66,7 @@ extern uint16_t Connection_Handle;
 
 /* Private variables ---------------------------------------------------------*/
 uint16_t SizeCv = 1;
-uint16_t SizeRv = 500;
+uint16_t SizeRv = 200;
 
 /**
  * START of Section BLE_DRIVER_CONTEXT

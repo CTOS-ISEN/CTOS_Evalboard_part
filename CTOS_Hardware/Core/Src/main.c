@@ -92,8 +92,7 @@ int16_t actual_state = 0;
 int16_t target_state = 0;
 uint16_t startACK_flag = 0;
 uint16_t startSEND_flag = 0;
-uint8_t *txt_to_send =
-		"Lorem ipsum odor amet, consectetuer adipiscing elit. Fringilla in magnis potenti; convallis ad nec sollicitudin. Laoreet platea venenatis mauris morbi tempus odio eu. Pellentesque justo viverra vel tempus mattis parturient malesuada. Dignissim massa quam dis duis, nunc lobortis senectus? Neque aliquam suspendisse tincidunt mus aenean laoreet condimentum justo vivamus. Conubia velit volutpat maximus, vivamus ridiculus taciti habitasse. Ex elit cras;";
+uint8_t *txt_to_send = "Lorem ipsum odor amet, consectetuer adipiscing elit. Fringilla in magnis potenti; convallis ad nec sollicitudin. Laoreet platea venenatis mauris morbi tempus odio eu. Pellentesque justo viverra vel tempus mattis parturient malesuada. Dignissim massa quam dis duis, nunc lobortis senectus? Neque aliquam suspendisse tincidunt mus aenean laoreet condimentum justo vivamus. Conubia velit volutpat maximus, vivamus ridiculus taciti habitasse. Ex elit cras;";
 FSM_States_Enum current_state = STATE_HANDLER;
 ExecutionState_Enum execution_state = NOT_EXECUTED;
 
@@ -160,16 +159,14 @@ void state_store(void) {
 			global_mesure_data.inertialValue.roll);
 
 
-//	start_fileWriting();
-//	write_object(&global_mesure_data);
-//	end_fileWriting();
+
+	write_object(&global_mesure_data);
+
 }
 
 void state_send(void){
-	static uint8_t a = 0;
+
 	log_printf("SENDING DATA\r\n");
-	//Custom_BleSendNotification((uint8_t *)&a);
-	a++;
 }
 
 
@@ -295,9 +292,8 @@ int main(void)
 
 
 
-//	SD_mount();
-//	SD_unMount();
-
+	SD_mount();
+	start_fileWriting();
 	HAL_TIM_Base_Start_IT(&htim16);
   /* USER CODE END 2 */
 
@@ -313,6 +309,9 @@ int main(void)
     /* USER CODE BEGIN 3 */
 
 	}
+
+	SD_unMount();
+
   /* USER CODE END 3 */
 }
 

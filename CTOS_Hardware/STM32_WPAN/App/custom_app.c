@@ -111,7 +111,16 @@ void Custom_STM_App_Notification(Custom_STM_App_Notification_evt_t *pNotificatio
       /* USER CODE BEGIN CUSTOM_STM_RV_NOTIFY_ENABLED_EVT */
 		startSEND_flag = 1;
 		startACK_flag = 0;
-		Custom_BleSendNotification("50");
+		end_fileWriting();
+
+		uint16_t idx = 0;
+		while(txt_to_send[idx] != '\0'){
+			strncpy(NotifyCharData, txt_to_send + idx, 200);
+			Custom_Rv_Send_Notification();
+			idx += 200;
+			HAL_Delay(1000);
+		}
+		startSEND_flag = 0;
       /* USER CODE END CUSTOM_STM_RV_NOTIFY_ENABLED_EVT */
       break;
 
@@ -205,7 +214,7 @@ __USED void Custom_Rv_Update_Char(void) /* Property Read */
 
   if (updateflag != 0)
   {
-	Custom_STM_App_Update_Char_Ext(Connection_Handle, CUSTOM_STM_RV, (uint8_t *)UpdateCharData);
+    Custom_STM_App_Update_Char(CUSTOM_STM_RV, (uint8_t *)UpdateCharData);
   }
 
   /* USER CODE BEGIN Rv_UC_Last*/
@@ -227,7 +236,7 @@ void Custom_Rv_Send_Notification(void) /* Property Notification */
 
   if (updateflag != 0)
   {
-	Custom_STM_App_Update_Char_Ext(Connection_Handle, CUSTOM_STM_RV, (uint8_t *)NotifyCharData);
+    Custom_STM_App_Update_Char(CUSTOM_STM_RV, (uint8_t *)NotifyCharData);
   }
 
   /* USER CODE BEGIN Rv_NS_Last*/
@@ -238,13 +247,5 @@ void Custom_Rv_Send_Notification(void) /* Property Notification */
 }
 
 /* USER CODE BEGIN FD_LOCAL_FUNCTIONS*/
-void Custom_BleSendNotification(uint8_t *data) {
 
-	if (startSEND_flag != 0) {
-		strncat(NotifyCharData, data, 512);
-		Custom_STM_App_Update_Char_Ext(Connection_Handle, CUSTOM_STM_RV,
-				(uint8_t*) NotifyCharData);
-	}
-
-}
 /* USER CODE END FD_LOCAL_FUNCTIONS*/

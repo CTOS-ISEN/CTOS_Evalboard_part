@@ -6,7 +6,6 @@
  */
 
 #include "SD_library.h"
-#include "app_fatfs.h"
 #include <stdarg.h>
 #include <string.h>
 #include <stdio.h>
