@@ -30,7 +30,7 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "SD_library.h"
+
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

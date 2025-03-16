@@ -6,6 +6,7 @@
  */
 
 #include "SD_library.h"
+#include "app_fatfs.h"
 #include <stdarg.h>
 #include <string.h>
 #include <stdio.h>
@@ -185,43 +186,46 @@ void write_object(mesure *data) {
 }
 
 
-
-void read_file() {
-
+void start_fileReading(){
     fres = f_open(&fil, file_name, FA_READ);
     if (fres != FR_OK) {
         log_printf("f_open error (%i)\r\n", fres);
         Error_Handler();
         return;
     }
+}
+
+void end_fileReading(){
+    //close file
+	f_close(&fil);
+}
+
+
+unsigned int readFile_toBuffer(uint8_t *notificationBuffer) {
 
 
     UINT bytesRead = 0;
 
+    char *buffer = (char*) calloc(200, sizeof(char));
+	fres = f_read(&fil, buffer, 200, &bytesRead);
+	//fres = f_read(&fil, buffer, strlen(buffer) - 1, &bytesRead);
+	//fres = f_read(&fil, buffer, 1023, &bytesRead);
 
-    do{
-        char *buffer = (char*) calloc(60, sizeof(char));
-    	fres = f_read(&fil, buffer, 60, &bytesRead);
-    	//fres = f_read(&fil, buffer, strlen(buffer) - 1, &bytesRead);
-    	//fres = f_read(&fil, buffer, 1023, &bytesRead);
+	if (fres != FR_OK) {
+		log_printf("f_read error (%i)\r\n", fres);
+		f_close(&fil);
+		//Error_Handler();
+		bytesRead = 0;
+	}
 
-		if (fres != FR_OK) {
-			log_printf("f_read error (%i)\r\n", fres);
-			f_close(&fil);
-			//Error_Handler();
-			break;
-		}
-
-    	log_printf("%s\n", buffer);
-
-
-
-		free(buffer);
-
-    }while(bytesRead > 0);
+	//log_printf("%s\n", buffer);
+	strncat(notificationBuffer, buffer, 200);
+	//call_sendNotification();
 
 
-    //close file
-	f_close(&fil);
+	free(buffer);
+
+    return bytesRead;
+
 }
 

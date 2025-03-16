@@ -37,7 +37,6 @@ extern "C" {
 /* USER CODE BEGIN Includes */
 #include "ToF_library.h"	//include deja ranging_sensor
 #include "SD_library.h"
-//#include "custom_ranging_sensor.h"
 #include "Config.h"	//include deja MEMS et ranging_sensor
 #include "stdio.h"
 #include "stdlib.h"

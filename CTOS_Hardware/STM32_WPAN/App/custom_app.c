@@ -113,14 +113,22 @@ void Custom_STM_App_Notification(Custom_STM_App_Notification_evt_t *pNotificatio
 		startACK_flag = 0;
 		end_fileWriting();
 
-		uint16_t idx = 0;
-		while(txt_to_send[idx] != '\0'){
-			strncpy(NotifyCharData, txt_to_send + idx, 200);
+		start_fileReading();
+
+		unsigned int bytesRead =0;
+		do{
+			bytesRead = readFile_toBuffer((uint8_t *)NotifyCharData);
+			//sprintf(NotifyCharData, "%d", bytesRead);
+			log_printf("%s\r\n", NotifyCharData);
 			Custom_Rv_Send_Notification();
-			idx += 200;
 			HAL_Delay(1000);
-		}
+			//bytesRead--;
+		}while(bytesRead > 0);
+
+		end_fileReading();
+
 		startSEND_flag = 0;
+		log_printf("finished sending data");
       /* USER CODE END CUSTOM_STM_RV_NOTIFY_ENABLED_EVT */
       break;
 
@@ -237,6 +245,7 @@ void Custom_Rv_Send_Notification(void) /* Property Notification */
   if (updateflag != 0)
   {
     Custom_STM_App_Update_Char(CUSTOM_STM_RV, (uint8_t *)NotifyCharData);
+    log_printf("message sent\r\n");
   }
 
   /* USER CODE BEGIN Rv_NS_Last*/

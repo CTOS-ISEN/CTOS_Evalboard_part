@@ -12,10 +12,15 @@
 #include "Config.h"
 
 
-void SD_Init();
-void SD_deInit(void);
+void SD_mount();
+void SD_unMount(void);
 void SD_status(void);
-void SD_write_object();
-void SD_read_data();
+void start_fileWriting();
+void end_fileWriting();
+void start_fileReading();
+void end_fileReading();
+
+void write_object(mesure *data);
+unsigned int readFile_toBuffer(uint8_t *notificationBuffer);
 
 #endif /* SD_LIBRARY_SD_LIBRARY_H_ */
