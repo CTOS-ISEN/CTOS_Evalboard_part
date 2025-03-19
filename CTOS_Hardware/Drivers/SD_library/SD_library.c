@@ -204,8 +204,8 @@ void end_fileReading(){
 unsigned int readFile_toBuffer(uint8_t *notificationBuffer) {
     UINT bytesRead = 0;
 
-    char *buffer = (char*) calloc(30, sizeof(char));
-	fres = f_read(&fil, buffer, 30, &bytesRead);
+    char *buffer = (char*) calloc(200, sizeof(char));
+	fres = f_read(&fil, buffer, 200, &bytesRead);
 
 
 	if (fres != FR_OK) {
