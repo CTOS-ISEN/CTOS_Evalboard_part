@@ -167,6 +167,9 @@ void state_store(void) {
 void state_send(void){
 
 	log_printf("SENDING DATA\r\n");
+	UTIL_SEQ_SetTask(1 << 26, CFG_SCH_PRIO_0);
+
+
 }
 
 

@@ -50,7 +50,7 @@ typedef struct
 
 /* Private defines ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define TASKID 26
 /* USER CODE END PD */
 
 /* Private macros -------------------------------------------------------------*/
@@ -82,7 +82,7 @@ static void Custom_Rv_Update_Char(void);
 static void Custom_Rv_Send_Notification(void);
 
 /* USER CODE BEGIN PFP */
-
+void readAndSendData_task();
 /* USER CODE END PFP */
 
 /* Functions Definition ------------------------------------------------------*/
@@ -111,30 +111,20 @@ void Custom_STM_App_Notification(Custom_STM_App_Notification_evt_t *pNotificatio
       /* USER CODE BEGIN CUSTOM_STM_RV_NOTIFY_ENABLED_EVT */
 		startSEND_flag = 1;
 		startACK_flag = 0;
-		end_fileWriting();
 
-		start_fileReading();
+		//taks registered at init
+		UTIL_SEQ_ResumeTask(1 << TASKID);
 
-		unsigned int bytesRead =0;
-		do{
-			bytesRead = readFile_toBuffer((uint8_t *)NotifyCharData);
-			//sprintf(NotifyCharData, "%d", bytesRead);
-			log_printf("%s\r\n", NotifyCharData);
-			Custom_Rv_Send_Notification();
-			HAL_Delay(1000);
-			//bytesRead--;
-		}while(bytesRead > 0);
-
-		end_fileReading();
-
-		startSEND_flag = 0;
-		log_printf("finished sending data");
       /* USER CODE END CUSTOM_STM_RV_NOTIFY_ENABLED_EVT */
       break;
 
     case CUSTOM_STM_RV_NOTIFY_DISABLED_EVT:
       /* USER CODE BEGIN CUSTOM_STM_RV_NOTIFY_DISABLED_EVT */
 		startSEND_flag = 0;
+
+		//stop and unregister the task so next time it start from the begining
+		UTIL_SEQ_PauseTask(1 << TASKID);
+		//UTIL_SEQ_RegTask(1 << TASKID, UTIL_SEQ_RFU, NULL);
       /* USER CODE END CUSTOM_STM_RV_NOTIFY_DISABLED_EVT */
       break;
 
@@ -196,7 +186,8 @@ void Custom_APP_Notification(Custom_App_ConnHandle_Not_evt_t *pNotification)
 void Custom_APP_Init(void)
 {
   /* USER CODE BEGIN CUSTOM_APP_Init */
-
+	//register a new task that read and send data through notification
+	UTIL_SEQ_RegTask(1 << TASKID, UTIL_SEQ_RFU, readAndSendData_task);
   /* USER CODE END CUSTOM_APP_Init */
   return;
 }
@@ -245,7 +236,6 @@ void Custom_Rv_Send_Notification(void) /* Property Notification */
   if (updateflag != 0)
   {
     Custom_STM_App_Update_Char(CUSTOM_STM_RV, (uint8_t *)NotifyCharData);
-    log_printf("message sent\r\n");
   }
 
   /* USER CODE BEGIN Rv_NS_Last*/
@@ -256,5 +246,33 @@ void Custom_Rv_Send_Notification(void) /* Property Notification */
 }
 
 /* USER CODE BEGIN FD_LOCAL_FUNCTIONS*/
+void readAndSendData_task(){
+
+	static unsigned int bytesRead = 0;
+
+	if(startSEND_flag == 1 && bytesRead == 0){
+		end_fileWriting();
+		start_fileReading();
+		bytesRead = 20; //nb aleatoire au dessus de 0
+	}
+
+	if(bytesRead > 0){
+		//bytesRead = readFile_toBuffer((uint8_t *)NotifyCharData);
+		sprintf(NotifyCharData, "%d", bytesRead);
+		log_printf("%s\r\n", NotifyCharData);
+		Custom_Rv_Send_Notification();
+		bytesRead--;
+	}
+
+	if(bytesRead == 0 && startSEND_flag == 1){
+		end_fileReading();
+		startSEND_flag = 0;
+		log_printf("finished sending data");
+
+		UTIL_SEQ_PauseTask(1 << TASKID);
+	}
+
+}
+
 
 /* USER CODE END FD_LOCAL_FUNCTIONS*/
