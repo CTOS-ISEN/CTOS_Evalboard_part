@@ -257,17 +257,18 @@ void readAndSendData_task(){
 	}
 
 	if(bytesRead > 0){
-		//bytesRead = readFile_toBuffer((uint8_t *)NotifyCharData);
-		sprintf(NotifyCharData, "%d", bytesRead);
+
+		memset(NotifyCharData, '\0', sizeof(NotifyCharData));
+		log_printf("data whiped %s\r\n", NotifyCharData);
+		bytesRead = readFile_toBuffer((uint8_t *)NotifyCharData);
 		log_printf("%s\r\n", NotifyCharData);
 		Custom_Rv_Send_Notification();
-		bytesRead--;
 	}
 
 	if(bytesRead == 0 && startSEND_flag == 1){
 		end_fileReading();
 		startSEND_flag = 0;
-		log_printf("finished sending data");
+		log_printf("finished sending data\r\n");
 
 		UTIL_SEQ_PauseTask(1 << TASKID);
 	}

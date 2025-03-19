@@ -202,30 +202,23 @@ void end_fileReading(){
 
 
 unsigned int readFile_toBuffer(uint8_t *notificationBuffer) {
-
-
     UINT bytesRead = 0;
 
-    char *buffer = (char*) calloc(200, sizeof(char));
-	fres = f_read(&fil, buffer, 200, &bytesRead);
-	//fres = f_read(&fil, buffer, strlen(buffer) - 1, &bytesRead);
-	//fres = f_read(&fil, buffer, 1023, &bytesRead);
+    char *buffer = (char*) calloc(30, sizeof(char));
+	fres = f_read(&fil, buffer, 30, &bytesRead);
+
 
 	if (fres != FR_OK) {
 		log_printf("f_read error (%i)\r\n", fres);
 		f_close(&fil);
-		//Error_Handler();
 		bytesRead = 0;
 	}
 
-	//log_printf("%s\n", buffer);
+
 	strncat(notificationBuffer, buffer, 200);
-	//call_sendNotification();
-
-
 	free(buffer);
 
-    return bytesRead;
 
+    return bytesRead;
 }
 
