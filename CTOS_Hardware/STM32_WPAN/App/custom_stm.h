@@ -42,7 +42,7 @@ typedef enum
 typedef enum
 {
   /* check_validation */
-  CUSTOM_STM_CV_WRITE_NO_RESP_EVT,
+  CUSTOM_STM_CV_WRITE_EVT,
   /* retrieve_validation */
   CUSTOM_STM_RV_NOTIFY_ENABLED_EVT,
   CUSTOM_STM_RV_NOTIFY_DISABLED_EVT,

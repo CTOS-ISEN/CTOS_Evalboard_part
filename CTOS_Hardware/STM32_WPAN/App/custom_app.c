@@ -100,11 +100,11 @@ void Custom_STM_App_Notification(Custom_STM_App_Notification_evt_t *pNotificatio
     /* USER CODE END CUSTOM_STM_App_Notification_Custom_Evt_Opcode */
 
     /* start_survey */
-    case CUSTOM_STM_CV_WRITE_NO_RESP_EVT:
-      /* USER CODE BEGIN CUSTOM_STM_CV_WRITE_NO_RESP_EVT */
+    case CUSTOM_STM_CV_WRITE_EVT:
+      /* USER CODE BEGIN CUSTOM_STM_CV_WRITE_EVT */
 		//telephone envoie des infos
 		Custom_STM_App_Update_Char(CUSTOM_STM_CV, (uint8_t*) UpdateCharData);
-      /* USER CODE END CUSTOM_STM_CV_WRITE_NO_RESP_EVT */
+      /* USER CODE END CUSTOM_STM_CV_WRITE_EVT */
       break;
 
     case CUSTOM_STM_RV_NOTIFY_ENABLED_EVT:

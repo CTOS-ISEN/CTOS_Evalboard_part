@@ -192,7 +192,7 @@ static SVCCTL_EvtAckStatus_t Custom_STM_Event_Handler(void *Event)
           {
             return_value = SVCCTL_EvtAckFlowEnable;
             /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_1_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
-            Notification.Custom_Evt_Opcode = CUSTOM_STM_CV_WRITE_NO_RESP_EVT;
+            Notification.Custom_Evt_Opcode = CUSTOM_STM_CV_WRITE_EVT;
 			Notification.DataTransfered.Length=attribute_modified->Attr_Data_Length;
 			Notification.DataTransfered.pPayload=attribute_modified->Attr_Data;
 			Custom_STM_App_Notification(&Notification);
@@ -333,7 +333,7 @@ void SVCCTL_InitCustomSvc(void)
   ret = aci_gatt_add_char(CustomContext.CustomSsHdle,
                           UUID_TYPE_128, &uuid,
                           SizeCv,
-                          CHAR_PROP_WRITE_WITHOUT_RESP,
+                          CHAR_PROP_WRITE,
                           ATTR_PERMISSION_NONE,
                           GATT_NOTIFY_ATTRIBUTE_WRITE,
                           0x10,
