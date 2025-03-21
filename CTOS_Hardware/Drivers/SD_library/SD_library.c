@@ -48,7 +48,7 @@ void SD_unMount(void){
 
 void start_fileWriting(){
     //open
-    fres = f_open(&fil, file_name, FA_OPEN_APPEND | FA_WRITE);
+    fres = f_open(&fil, file_name, FA_WRITE | FA_OPEN_ALWAYS);
     if (fres != FR_OK) {
         log_printf("f_open error (%i)\r\n", fres);
         Error_Handler();
