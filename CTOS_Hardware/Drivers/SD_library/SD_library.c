@@ -70,9 +70,9 @@ void start_fileWriting(){
 
 void end_fileWriting(){
     //end the json tab
-    char *endBuf = "]\n";
+    char *endBuf = "{}]\n";
     UINT bytesWritten;
-    fres = f_write(&fil, endBuf, 3, &bytesWritten);
+    fres = f_write(&fil, endBuf, 5, &bytesWritten);
     if (fres == FR_OK) {
         log_printf("Wrote %u bytes to '%s'.\r\n", bytesWritten, file_name);
     } else {
@@ -148,7 +148,7 @@ void write_object(mesure *data) {
 	char *dist3 = (char*) calloc(22, sizeof(char));
 	sprintf(dist3, "\t\"dist3\":%ld,\r\n", data->distance.ZoneResult[0].Distance[2]);
 	char *dist4 = (char*) calloc(22, sizeof(char));
-	sprintf(dist4, "\t\"dist4\":%ld,\r\n", data->distance.ZoneResult[0].Distance[3]);
+	sprintf(dist4, "\t\"dist4\":%ld\r\n", data->distance.ZoneResult[0].Distance[3]);
 
 
 
