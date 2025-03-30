@@ -92,7 +92,6 @@ int16_t actual_state = 0;
 int16_t target_state = 0;
 uint16_t startACK_flag = 0;
 uint16_t startSEND_flag = 0;
-uint8_t *txt_to_send = "Lorem ipsum odor amet, consectetuer adipiscing elit. Fringilla in magnis potenti; convallis ad nec sollicitudin. Laoreet platea venenatis mauris morbi tempus odio eu. Pellentesque justo viverra vel tempus mattis parturient malesuada. Dignissim massa quam dis duis, nunc lobortis senectus? Neque aliquam suspendisse tincidunt mus aenean laoreet condimentum justo vivamus. Conubia velit volutpat maximus, vivamus ridiculus taciti habitasse. Ex elit cras;";
 FSM_States_Enum current_state = STATE_HANDLER;
 ExecutionState_Enum execution_state = NOT_EXECUTED;
 
@@ -136,8 +135,6 @@ void state_ack_imu(void) {
 }
 
 void state_store(void) {
-	// Récupérer les données stockées
-	//mesure current_mesure = global_mesure_data;
 
 	logger_print_result(&global_mesure_data.distance);
 	log_printf("Acceleration : X : %ld | Y : %ld | Z : %ld\n\r",
@@ -159,15 +156,15 @@ void state_store(void) {
 			global_mesure_data.inertialValue.roll);
 
 
-
-	write_object(&global_mesure_data);
+	Gnss_acquire_data();
+	//write_object(&global_mesure_data);
 
 }
 
 void state_send(void){
 
 	log_printf("SENDING DATA\r\n");
-	UTIL_SEQ_SetTask(1 << 26, CFG_SCH_PRIO_0);
+	//UTIL_SEQ_SetTask(1 << 26, CFG_SCH_PRIO_0);
 
 
 }
@@ -281,6 +278,7 @@ int main(void)
 	init_fsm();
 	log_init(&huart1);
 	ToF_init();
+	Gnss_init();
 
 	MyInitLSM6DSO();
 	MyInitLIS2MDL();
@@ -295,8 +293,8 @@ int main(void)
 
 
 
-	SD_mount();
-	start_fileWriting();
+	//SD_mount();
+	//start_fileWriting();
 	HAL_TIM_Base_Start_IT(&htim16);
   /* USER CODE END 2 */
 
@@ -313,7 +311,7 @@ int main(void)
 
 	}
 
-	SD_unMount();
+	//SD_unMount();
 
   /* USER CODE END 3 */
 }
@@ -719,13 +717,23 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(RST_GNSS_GPIO_Port, RST_GNSS_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(SD_CS_GPIO_Port, SD_CS_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, WKP_GNSS_Pin|VL53L4CX_XSHUT_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, LD2_Pin|LD3_Pin|LD1_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(VL53L4CX_XSHUT_GPIO_Port, VL53L4CX_XSHUT_Pin, GPIO_PIN_RESET);
+  /*Configure GPIO pin : RST_GNSS_Pin */
+  GPIO_InitStruct.Pin = RST_GNSS_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(RST_GNSS_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : SD_CS_Pin */
   GPIO_InitStruct.Pin = SD_CS_Pin;
@@ -733,6 +741,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(SD_CS_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : WKP_GNSS_Pin VL53L4CX_XSHUT_Pin */
+  GPIO_InitStruct.Pin = WKP_GNSS_Pin|VL53L4CX_XSHUT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
@@ -746,13 +761,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : VL53L4CX_XSHUT_Pin */
-  GPIO_InitStruct.Pin = VL53L4CX_XSHUT_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(VL53L4CX_XSHUT_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : B2_Pin */
   GPIO_InitStruct.Pin = B2_Pin;

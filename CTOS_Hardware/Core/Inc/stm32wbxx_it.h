@@ -59,6 +59,8 @@ void RTC_WKUP_IRQHandler(void);
 void EXTI0_IRQHandler(void);
 void EXTI4_IRQHandler(void);
 void TIM1_UP_TIM16_IRQHandler(void);
+void I2C1_EV_IRQHandler(void);
+void I2C1_ER_IRQHandler(void);
 void IPCC_C1_RX_IRQHandler(void);
 void IPCC_C1_TX_IRQHandler(void);
 void HSEM_IRQHandler(void);

@@ -40,6 +40,7 @@ extern "C" {
 #include "Config.h"	//include deja MEMS et ranging_sensor
 #include "stdio.h"
 #include "stdlib.h"
+#include "Driver_gnss.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -65,8 +66,12 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define RST_GNSS_Pin GPIO_PIN_13
+#define RST_GNSS_GPIO_Port GPIOC
 #define SD_CS_Pin GPIO_PIN_0
 #define SD_CS_GPIO_Port GPIOA
+#define WKP_GNSS_Pin GPIO_PIN_5
+#define WKP_GNSS_GPIO_Port GPIOA
 #define B1_Pin GPIO_PIN_4
 #define B1_GPIO_Port GPIOC
 #define B1_EXTI_IRQn EXTI4_IRQn

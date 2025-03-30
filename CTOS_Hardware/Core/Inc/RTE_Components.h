@@ -22,6 +22,12 @@
 #define  __RTE_COMPONENTS_H__
 
 /* Defines ------------------------------------------------------------------*/
+/* STMicroelectronics.X-CUBE-GNSS1.7.0.1 */
+#define TESEO_LIV3F
+#define LIB_GNSS
+#define LIB_NMEA
+#define LIB_GNSS_INTERFACE
+#define GNSS1A1
 /* STMicroelectronics.X-CUBE-MEMS1.11.0.0 */
 #define LSM6DSO_ACCGYR_I2C
 #define LIS2MDL_MAG_I2C
