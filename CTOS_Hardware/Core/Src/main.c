@@ -132,6 +132,8 @@ void state_ack_tof(void) {
 
 void state_ack_imu(void) {
 	GettingIMUInfo(&global_mesure_data.inertialValue);
+	Gnss_acquire_data(&global_mesure_data.gnss_message);
+
 }
 
 void state_store(void) {
@@ -156,7 +158,7 @@ void state_store(void) {
 			global_mesure_data.inertialValue.roll);
 
 
-	Gnss_acquire_data();
+	log_printf("messssage : %s\r\n", global_mesure_data.gnss_message.buf);
 	//write_object(&global_mesure_data);
 
 }
