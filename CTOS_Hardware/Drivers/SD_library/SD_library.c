@@ -109,28 +109,48 @@ void SD_status(void) {
 void write_object(mesure *data) {
 
 	//sprintf automatically trim empty space
-	char *Acc_x = (char*) calloc(20, sizeof(char));
+	/*char *Acc_x = (char*) calloc(20, sizeof(char));
 	sprintf(Acc_x, "\t\"acc_x\":%ld,\r\n", data->inertialValue.Acc.x);
 	char *Acc_y = (char*) calloc(20, sizeof(char));
 	sprintf(Acc_y, "\t\"acc_y\":%ld,\r\n", data->inertialValue.Acc.y);
 	char *Acc_z = (char*) calloc(20, sizeof(char));
-	sprintf(Acc_z, "\t\"acc_z\":%ld,\r\n", data->inertialValue.Acc.z);
+	sprintf(Acc_z, "\t\"acc_z\":%ld,\r\n", data->inertialValue.Acc.z);*/
 
 
-	char *Gyr_x = (char*) calloc(20, sizeof(char));
+	char *acc = (char*) calloc(40, sizeof(char));
+	sprintf(acc, "\t\"acc\":[%ld, %ld, %ld],\r\n", data->inertialValue.Acc.x, data->inertialValue.Acc.y, data->inertialValue.Acc.z);
+
+
+	char *quat = (char*) calloc(40, sizeof(char));
+	sprintf(quat, "\t\"quat\":[%.2f, %.2f, %.2f, %.2f],\r\n", data->inertialValue.quat[0], data->inertialValue.quat[1], data->inertialValue.quat[2], data->inertialValue.quat[3]);
+
+
+
+	/*char *Gyr_x = (char*) calloc(20, sizeof(char));
 	sprintf(Gyr_x, "\t\"gyr_x\":%ld,\r\n", data->inertialValue.Gyr.x);
 	char *Gyr_y = (char*) calloc(20, sizeof(char));
 	sprintf(Gyr_y, "\t\"gyr_y\":%ld,\r\n", data->inertialValue.Gyr.y);
 	char *Gyr_z = (char*) calloc(20, sizeof(char));
-	sprintf(Gyr_z, "\t\"gyr_z\":%ld,\r\n", data->inertialValue.Gyr.z);
+	sprintf(Gyr_z, "\t\"gyr_z\":%ld,\r\n", data->inertialValue.Gyr.z);*/
 
 
+	char *gyr = (char*) calloc(40, sizeof(char));
+	sprintf(gyr, "\t\"gyr\":[%ld, %ld, %ld],\r\n", data->inertialValue.Gyr.x, data->inertialValue.Gyr.y, data->inertialValue.Gyr.z);
+
+
+/*
 	char *Mag_x = (char*) calloc(20, sizeof(char));
 	sprintf(Mag_x, "\t\"mag_x\":%ld,\r\n", data->inertialValue.Mag.x);
 	char *Mag_y = (char*) calloc(20, sizeof(char));
 	sprintf(Mag_y, "\t\"mag_y\":%ld,\r\n", data->inertialValue.Mag.y);
 	char *Mag_z = (char*) calloc(20, sizeof(char));
 	sprintf(Mag_z, "\t\"mag_z\":%ld,\r\n", data->inertialValue.Mag.z);
+	*/
+
+	char *mag = (char*) calloc(40, sizeof(char));
+	sprintf(mag, "\t\"mag\":[%ld, %ld, %ld],\r\n", data->inertialValue.Mag.x, data->inertialValue.Mag.y, data->inertialValue.Mag.z);
+
+
 
 
 	char *yaw = (char*) calloc(20, sizeof(char));
@@ -151,20 +171,17 @@ void write_object(mesure *data) {
 	sprintf(dist4, "\t\"dist4\":%ld\r\n", data->distance.ZoneResult[0].Distance[3]);
 
 
+	//char gnss = (char*) calloc(data->gnss_message.len + 11, sizeof(char));		//len(gnss) + 10 characters of formating + \0
+	//sprintf(dist4, "\t\"gnss\":%s\r\n", data->gnss_message.buf);
 
     // Create a buffer to store the human-readable data
 	//strcat automatically trim empty space
-    char *buffer = (char*) calloc(350, sizeof(char));
+    char *buffer = (char*) calloc(400, sizeof(char));
     strcat(buffer, "{\r\n");
-    strcat(buffer, Acc_x);
-    strcat(buffer, Acc_y);
-    strcat(buffer, Acc_z);
-    strcat(buffer, Gyr_x);
-    strcat(buffer, Gyr_y);
-    strcat(buffer, Gyr_z);
-    strcat(buffer, Mag_x);
-    strcat(buffer, Mag_y);
-    strcat(buffer, Mag_z);
+    strcat(buffer, acc);
+    strcat(buffer, quat);
+    strcat(buffer, gyr);
+    strcat(buffer, mag);
     strcat(buffer, yaw);
     strcat(buffer, pitch);
     strcat(buffer, roll);
@@ -172,6 +189,7 @@ void write_object(mesure *data) {
     strcat(buffer, dist2);
     strcat(buffer, dist3);
     strcat(buffer, dist4);
+    //strcat(buffer, gnss);
     strcat(buffer, "},\r\n");
 
     // Write the formatted data to the file
@@ -183,6 +201,21 @@ void write_object(mesure *data) {
         log_printf("f_write error (%i) or partial write.\r\n", fres);
     }
 
+
+
+    free(acc);
+    free(quat);
+    free(gyr);
+    free(mag);
+    free(yaw);
+    free(pitch);
+    free(roll);
+    free(dist1);
+    free(dist2);
+    free(dist3);
+    free(dist4);
+    //free(gnss);
+    free(buffer);
 }
 
 

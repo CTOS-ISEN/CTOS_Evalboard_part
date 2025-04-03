@@ -47,6 +47,8 @@ typedef struct{
 	float yaw;
 	float pitch;
 	float roll;
+
+	float quat[4];
 }IMU_Data;
 
 void MyInitLSM6DSO(void);

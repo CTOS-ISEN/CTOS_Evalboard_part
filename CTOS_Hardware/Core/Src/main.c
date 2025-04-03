@@ -157,16 +157,18 @@ void state_store(void) {
 			global_mesure_data.inertialValue.pitch,
 			global_mesure_data.inertialValue.roll);
 
+	log_printf("Quat : %f, %f, %f, %f\r\n", global_mesure_data.inertialValue.quat[0], global_mesure_data.inertialValue.quat[1], global_mesure_data.inertialValue.quat[2], global_mesure_data.inertialValue.quat[3]);
+
 
 	log_printf("messssage : %s\r\n", global_mesure_data.gnss_message.buf);
-	//write_object(&global_mesure_data);
+	write_object(&global_mesure_data);
 
 }
 
 void state_send(void){
 
 	log_printf("SENDING DATA\r\n");
-	//UTIL_SEQ_SetTask(1 << 26, CFG_SCH_PRIO_0);
+	UTIL_SEQ_SetTask(1 << 26, CFG_SCH_PRIO_0);
 
 
 }
@@ -295,8 +297,8 @@ int main(void)
 
 
 
-	//SD_mount();
-	//start_fileWriting();
+	SD_mount();
+	start_fileWriting();
 	HAL_TIM_Base_Start_IT(&htim16);
   /* USER CODE END 2 */
 

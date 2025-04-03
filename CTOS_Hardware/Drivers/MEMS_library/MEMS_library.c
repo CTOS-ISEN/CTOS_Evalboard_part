@@ -114,9 +114,16 @@ void MotionFXCompute(IMU_Data *data){
 	MotionFX_propagate(mfxstate, &data_out, &data_in, &dT);
 	MotionFX_update(mfxstate, &data_out, &data_in, &dT, NULL);
 
-	q = data_out.quaternion;
+	//q = data_out.quaternion;
 
 	data->yaw = data_out.rotation[0];
 	data->pitch = data_out.rotation[1];
 	data->roll = data_out.rotation[2];
+
+	for(int i=0; i<4; i++){
+		data->quat[i] = data_out.quaternion[i];
+	}
+
+
+
 }
