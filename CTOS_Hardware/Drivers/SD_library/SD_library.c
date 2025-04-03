@@ -58,9 +58,11 @@ void start_fileWriting(){
 
     //start a json tab
 
-    char *startBuf = "[\r\n";
+    char *startBuf = (char*) calloc(5, sizeof(char));
+	sprintf(startBuf, "[");
+
     UINT bytesWritten;
-    fres = f_write(&fil, startBuf, 4, &bytesWritten);
+    fres = f_write(&fil, startBuf, 2, &bytesWritten);
     if (fres == FR_OK) {
         log_printf("Wrote %u bytes to '%s'.\r\n", bytesWritten, file_name);
     } else {
@@ -180,21 +182,7 @@ void write_object(mesure *data) {
         log_printf("f_write error (%i) or partial write.\r\n", fres);
     }
 
-
-
-    /*free(acc);
-    free(quat);
-    free(gyr);
-    free(mag);
-    free(yaw);
-    free(pitch);
-    free(roll);
-    free(dist1);
-    free(dist2);
-    free(dist3);
-    free(dist4);
-    //free(gnss);
-    free(buffer);*/
+    log_printf("%s", buffer);
 }
 
 
@@ -226,8 +214,8 @@ unsigned int readFile_toBuffer(uint8_t *notificationBuffer) {
 		bytesRead = 0;
 	}
 
-
-	strncat(notificationBuffer, buffer, 200);
+	log_printf("%s\r\n", buffer);
+	memcpy(notificationBuffer, buffer, bytesRead);
 	free(buffer);
 
 

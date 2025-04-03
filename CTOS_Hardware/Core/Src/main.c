@@ -137,7 +137,7 @@ void state_ack_imu(void) {
 }
 
 void state_store(void) {
-
+/*
 	logger_print_result(&global_mesure_data.distance);
 	log_printf("Acceleration : X : %ld | Y : %ld | Z : %ld\n\r",
 			global_mesure_data.inertialValue.Acc.x,
@@ -160,7 +160,7 @@ void state_store(void) {
 	log_printf("Quat : %f, %f, %f, %f\r\n", global_mesure_data.inertialValue.quat[0], global_mesure_data.inertialValue.quat[1], global_mesure_data.inertialValue.quat[2], global_mesure_data.inertialValue.quat[3]);
 
 
-	log_printf("messssage : %s\r\n", global_mesure_data.gnss_message.buf);
+	log_printf("messssage : %s\r\n", global_mesure_data.gnss_message.buf);*/
 	write_object(&global_mesure_data);
 
 }

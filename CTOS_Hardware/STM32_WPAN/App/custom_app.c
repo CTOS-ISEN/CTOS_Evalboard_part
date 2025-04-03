@@ -259,10 +259,10 @@ void readAndSendData_task(){
 	if(bytesRead > 0){
 
 		memset(NotifyCharData, '\0', sizeof(NotifyCharData));
-		log_printf("data whiped %s\r\n", NotifyCharData);
 		bytesRead = readFile_toBuffer((uint8_t *)NotifyCharData);
-		log_printf("%s\r\n", NotifyCharData);
 		Custom_Rv_Send_Notification();
+
+		log_printf("BYTES SENT\r\n");
 	}
 
 	if(bytesRead == 0 && startSEND_flag == 1){
