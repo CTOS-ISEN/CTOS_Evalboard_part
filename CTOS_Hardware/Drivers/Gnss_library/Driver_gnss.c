@@ -27,42 +27,26 @@ void Gnss_acquire_data(GNSS1A1_GNSS_Msg_t *mess){
 	GNSS1A1_GNSS_BackgroundProcess(GNSS1A1_TESEO_LIV3F);
 	gnssMsg = GNSS1A1_GNSS_GetMessage(GNSS1A1_TESEO_LIV3F);
 
+    if (mess->buf) {
+        free(mess->buf);
+        mess->buf = NULL;
+    }
+
 	if (gnssMsg == NULL) {
-		mess = (GNSS1A1_GNSS_Msg_t *) malloc(sizeof(GNSS1A1_GNSS_Msg_t));
+		//mess = (GNSS1A1_GNSS_Msg_t *) malloc(sizeof(GNSS1A1_GNSS_Msg_t));
 		mess->len = strlen("empty message");
 		mess->buf = (uint8_t *) calloc(mess->len, sizeof(uint8_t));
 		strcpy(mess->buf, "empty message");
 	}
-	else{
-		*mess = *gnssMsg;
+	else if(gnssMsg != NULL && gnssMsg->len > 0){
+		//*mess = *gnssMsg;
+		mess->len = gnssMsg->len ;
+		mess->buf = (uint8_t *) calloc(mess->len , sizeof(uint8_t));
+		memcpy(mess->buf, gnssMsg->buf, mess->len -2);	//-2 to delete '\r\n'
 	}
 
 
 	GNSS1A1_GNSS_ReleaseMessage(GNSS1A1_TESEO_LIV3F, gnssMsg);
 }
-
-
-
-
-
-//plus susceptible aux erreurs
-/*
-void Gnss_acquire_data(GNSS1A1_GNSS_Msg_t *mess){
-	GNSS1A1_GNSS_Msg_t *gnssMsg = NULL;
-	GNSS1A1_GNSS_BackgroundProcess(GNSS1A1_TESEO_LIV3F);
-	gnssMsg = GNSS1A1_GNSS_GetMessage(GNSS1A1_TESEO_LIV3F);
-
-	if (gnssMsg == NULL) {
-		gnssMsg = (GNSS1A1_GNSS_Msg_t *) malloc(sizeof(GNSS1A1_GNSS_Msg_t));
-		gnssMsg->len = strlen("empty message");
-		gnssMsg->buf = (uint8_t *) calloc(gnssMsg->len, sizeof(uint8_t));
-		strcpy(gnssMsg->buf, "empty message");
-	}
-
-	*mess = *gnssMsg;
-
-	GNSS1A1_GNSS_ReleaseMessage(GNSS1A1_TESEO_LIV3F, gnssMsg);
-}
-*/
 
 

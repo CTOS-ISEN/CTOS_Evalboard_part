@@ -95,7 +95,7 @@ uint16_t startSEND_flag = 0;
 FSM_States_Enum current_state = STATE_HANDLER;
 ExecutionState_Enum execution_state = NOT_EXECUTED;
 
-void (*state_callbacks[6])(void);
+void (*state_callbacks[7])(void);
 
 /**
  * @Brief Set the state to the new state given
@@ -107,8 +107,10 @@ void set_new_state(FSM_States_Enum new_state) {
 		actual_state = 0;
 	if (new_state == STATE_ACK_IMU)
 		actual_state = 1;
-	if (new_state == STATE_STORE)
+	if (new_state == STATE_ACK_GNSS)
 		actual_state = 2;
+	if (new_state == STATE_STORE)
+		actual_state = 3;
 	if (new_state == STATE_SEND)
 		actual_state = 4;
 	execution_state = NOT_EXECUTED;
@@ -132,9 +134,12 @@ void state_ack_tof(void) {
 
 void state_ack_imu(void) {
 	GettingIMUInfo(&global_mesure_data.inertialValue);
-	Gnss_acquire_data(&global_mesure_data.gnss_message);
-
 }
+
+void state_ack_gnss(void) {
+	Gnss_acquire_data(&global_mesure_data.gnss_message);
+}
+
 
 void state_store(void) {
 /*
@@ -184,6 +189,7 @@ void init_fsm(void) {
 	state_callbacks[STATE_HANDLER] = state_start;
 	state_callbacks[STATE_ACK_TOF] = state_ack_tof;
 	state_callbacks[STATE_ACK_IMU] = state_ack_imu;
+	state_callbacks[STATE_ACK_GNSS] = state_ack_gnss;
 	state_callbacks[STATE_STORE] = state_store;
 	state_callbacks[STATE_SEND] = state_send;
 
@@ -214,6 +220,10 @@ void fsm_project(void) {
 		break;
 
 	case STATE_ACK_IMU:
+		set_new_state(STATE_ACK_GNSS);
+		break;
+
+	case STATE_ACK_GNSS:
 		set_new_state(STATE_STORE);
 		break;
 
@@ -824,6 +834,7 @@ void Error_Handler(void)
   /* USER CODE BEGIN Error_Handler_Debug */
 	/* User can add his own implementation to report the HAL error return state */
 	__disable_irq();
+	__BKPT();
 	while (1) {
 	}
   /* USER CODE END Error_Handler_Debug */
