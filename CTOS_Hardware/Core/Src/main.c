@@ -142,30 +142,6 @@ void state_ack_gnss(void) {
 
 
 void state_store(void) {
-/*
-	logger_print_result(&global_mesure_data.distance);
-	log_printf("Acceleration : X : %ld | Y : %ld | Z : %ld\n\r",
-			global_mesure_data.inertialValue.Acc.x,
-			global_mesure_data.inertialValue.Acc.y,
-			global_mesure_data.inertialValue.Acc.z);
-	log_printf("Gyroscope: X: %ld | Y: %ld | Z: %ld\n\r",
-			global_mesure_data.inertialValue.Gyr.x,
-			global_mesure_data.inertialValue.Gyr.y,
-			global_mesure_data.inertialValue.Gyr.z);
-	log_printf("Magnetoscope: X: %ld | Y: %ld | Z: %ld\n\r",
-			global_mesure_data.inertialValue.Mag.x,
-			global_mesure_data.inertialValue.Mag.y,
-			global_mesure_data.inertialValue.Mag.z);
-
-	log_printf("Angles: Yaw : %f | Pitch : %f | Roll : %f\r\n",
-			global_mesure_data.inertialValue.yaw,
-			global_mesure_data.inertialValue.pitch,
-			global_mesure_data.inertialValue.roll);
-
-	log_printf("Quat : %f, %f, %f, %f\r\n", global_mesure_data.inertialValue.quat[0], global_mesure_data.inertialValue.quat[1], global_mesure_data.inertialValue.quat[2], global_mesure_data.inertialValue.quat[3]);
-
-
-	log_printf("messssage : %s\r\n", global_mesure_data.gnss_message.buf);*/
 	write_object(&global_mesure_data);
 
 }

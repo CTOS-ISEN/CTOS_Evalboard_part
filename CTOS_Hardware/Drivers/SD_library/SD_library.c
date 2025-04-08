@@ -136,14 +136,13 @@ void write_object(mesure *data) {
 	sprintf(roll, "\t\"roll\":%.2f,\r\n", data->inertialValue.roll);
 
 
-	char *dist1 = (char*) calloc(22, sizeof(char));
-	sprintf(dist1, "\t\"dist1\":%ld,\r\n", data->distance.ZoneResult[0].Distance[0]);
-	char *dist2 = (char*) calloc(22, sizeof(char));
-	sprintf(dist2, "\t\"dist2\":%ld,\r\n", data->distance.ZoneResult[0].Distance[1]);
-	char *dist3 = (char*) calloc(22, sizeof(char));
-	sprintf(dist3, "\t\"dist3\":%ld,\r\n", data->distance.ZoneResult[0].Distance[2]);
-	char *dist4 = (char*) calloc(22, sizeof(char));
-	sprintf(dist4, "\t\"dist4\":%ld,\r\n", data->distance.ZoneResult[0].Distance[3]);
+	char *zn1 = (char*) calloc(50, sizeof(char));
+	sprintf(zn1, "\t\"zone1\":[%ld, %ld, %ld, %ld]\r\n",  data->distance.ZoneResult[0].Distance[0],  data->distance.ZoneResult[0].Distance[1],  data->distance.ZoneResult[0].Distance[2],  data->distance.ZoneResult[0].Distance[3]);
+
+
+	char *zn2 = (char*) calloc(50, sizeof(char));
+	sprintf(zn2, "\t\"zone2\":[%ld, %ld, %ld, %ld]\r\n",  data->distance.ZoneResult[1].Distance[0],  data->distance.ZoneResult[1].Distance[1],  data->distance.ZoneResult[1].Distance[2],  data->distance.ZoneResult[1].Distance[3]);
+
 
 
 	char *gnss = (char*) calloc(100, sizeof(char));;
@@ -166,10 +165,8 @@ void write_object(mesure *data) {
     strcat(buffer, yaw);
     strcat(buffer, pitch);
     strcat(buffer, roll);
-    strcat(buffer, dist1);
-    strcat(buffer, dist2);
-    strcat(buffer, dist3);
-    strcat(buffer, dist4);
+    strcat(buffer, zn1);
+    strcat(buffer, zn2);
     strcat(buffer, gnss);
     strcat(buffer, "},\r\n");
 
