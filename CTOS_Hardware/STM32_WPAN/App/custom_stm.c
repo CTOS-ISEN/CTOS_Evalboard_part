@@ -424,6 +424,18 @@ tBleStatus Custom_STM_App_Update_Char(Custom_STM_Char_Opcode_t CharOpcode, uint8
       }
 
 
+      if(pPayload[0] == 0xBC) {
+    	  startACK_flag = 0;
+    	  if(startSEND_flag == 0){
+    			startSEND_flag = 1;
+    			UTIL_SEQ_ResumeTask(1 << SEND_TASKID);
+    	  }
+    	  else{
+    		  startSEND_flag = 0;
+    		  UTIL_SEQ_PauseTask(1 << SEND_TASKID);
+    	  }
+      }
+
       /* USER CODE END CUSTOM_STM_App_Update_Service_1_Char_1*/
       break;
 

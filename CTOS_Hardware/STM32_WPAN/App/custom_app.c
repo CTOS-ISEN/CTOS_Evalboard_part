@@ -50,7 +50,7 @@ typedef struct
 
 /* Private defines ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define TASKID 26
+
 /* USER CODE END PD */
 
 /* Private macros -------------------------------------------------------------*/
@@ -109,21 +109,23 @@ void Custom_STM_App_Notification(Custom_STM_App_Notification_evt_t *pNotificatio
 
     case CUSTOM_STM_RV_NOTIFY_ENABLED_EVT:
       /* USER CODE BEGIN CUSTOM_STM_RV_NOTIFY_ENABLED_EVT */
-		startSEND_flag = 1;
-		startACK_flag = 0;
 
-		//taks registered at init
-		UTIL_SEQ_ResumeTask(1 << TASKID);
+    	//startSEND_flag = 1;
+		//startACK_flag = 0;
+		////taks registered at init
+		//UTIL_SEQ_ResumeTask(1 << SEND_TASKID);
 
       /* USER CODE END CUSTOM_STM_RV_NOTIFY_ENABLED_EVT */
       break;
 
     case CUSTOM_STM_RV_NOTIFY_DISABLED_EVT:
       /* USER CODE BEGIN CUSTOM_STM_RV_NOTIFY_DISABLED_EVT */
-		startSEND_flag = 0;
 
-		//stop and unregister the task so next time it start from the begining
-		UTIL_SEQ_PauseTask(1 << TASKID);
+    	//startSEND_flag = 0;
+		////stop and unregister the task so next time it start from the begining
+		//UTIL_SEQ_PauseTask(1 << SEND_TASKID);
+
+
 		//UTIL_SEQ_RegTask(1 << TASKID, UTIL_SEQ_RFU, NULL);
       /* USER CODE END CUSTOM_STM_RV_NOTIFY_DISABLED_EVT */
       break;
@@ -187,7 +189,7 @@ void Custom_APP_Init(void)
 {
   /* USER CODE BEGIN CUSTOM_APP_Init */
 	//register a new task that read and send data through notification
-	UTIL_SEQ_RegTask(1 << TASKID, UTIL_SEQ_RFU, readAndSendData_task);
+	UTIL_SEQ_RegTask(1 << SEND_TASKID, UTIL_SEQ_RFU, readAndSendData_task);
   /* USER CODE END CUSTOM_APP_Init */
   return;
 }
@@ -270,7 +272,7 @@ void readAndSendData_task(){
 		startSEND_flag = 0;
 		log_printf("finished sending data\r\n");
 
-		UTIL_SEQ_PauseTask(1 << TASKID);
+		UTIL_SEQ_PauseTask(1 << SEND_TASKID);
 	}
 
 }

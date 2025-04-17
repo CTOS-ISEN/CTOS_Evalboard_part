@@ -114,6 +114,7 @@ typedef enum {
 
 
 #define SD_SPI_HANDLE hspi2
+#define SEND_TASKID 26
 extern uint16_t startACK_flag;
 extern uint16_t startSEND_flag;
 extern uint8_t* txt_to_send;
