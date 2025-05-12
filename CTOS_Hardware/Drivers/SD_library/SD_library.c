@@ -58,11 +58,11 @@ void start_fileWriting(){
 
     //start a json tab
 
-    char *startBuf = (char*) calloc(5, sizeof(char));
+    char *startBuf = (char*) calloc(2, sizeof(char));
 	sprintf(startBuf, "[");
 
     UINT bytesWritten;
-    fres = f_write(&fil, startBuf, 2, &bytesWritten);
+    fres = f_write(&fil, startBuf, 1, &bytesWritten);
     if (fres == FR_OK) {
         log_printf("Wrote %u bytes to '%s'.\r\n", bytesWritten, file_name);
     } else {
@@ -72,9 +72,9 @@ void start_fileWriting(){
 
 void end_fileWriting(){
     //end the json tab
-    char *endBuf = "{}]\r\n";
+    char *endBuf = "{END}]\r\n";
     UINT bytesWritten;
-    fres = f_write(&fil, endBuf, 6, &bytesWritten);
+    fres = f_write(&fil, endBuf, 8, &bytesWritten);
     if (fres == FR_OK) {
         log_printf("Wrote %u bytes to '%s'.\r\n", bytesWritten, file_name);
     } else {
