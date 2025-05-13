@@ -23,4 +23,12 @@ void end_fileReading();
 void write_object(mesure *data);
 unsigned int readFile_toBuffer(uint8_t *notificationBuffer);
 
+
+typedef enum {
+	STATE_CLOSE,
+	STATE_WRITING,
+	STATE_READING
+} SD_State;
+
+
 #endif /* SD_LIBRARY_SD_LIBRARY_H_ */

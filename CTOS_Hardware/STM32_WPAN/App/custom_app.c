@@ -253,7 +253,6 @@ void readAndSendData_task(){
 	static unsigned int bytesRead = 0;
 
 	if(startSEND_flag == 1 && bytesRead == 0){
-		end_fileWriting();
 		start_fileReading();
 		bytesRead = 20; //nb aleatoire au dessus de 0
 	}

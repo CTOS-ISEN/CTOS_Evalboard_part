@@ -17,6 +17,8 @@ FIL fil;        // File handle
 FRESULT fres;   // Result after operations
 char *file_name = "mesure.txt";
 
+SD_State sd_state = STATE_CLOSE;
+
 
 void SD_mount(){
 	//mount sd
@@ -45,8 +47,25 @@ void SD_unMount(void){
 }
 
 
+void closeFile(void){
+	switch(sd_state){
+		case STATE_CLOSE:
+			break;
+		case STATE_READING:
+			end_fileReading();
+			break;
+		case STATE_WRITING:
+			end_fileWriting();
+			break;
+	}
+}
+
 
 void start_fileWriting(){
+	if(sd_state != STATE_CLOSE){
+		closeFile();
+	}
+
     //open
     fres = f_open(&fil, file_name, FA_WRITE | FA_CREATE_ALWAYS);
     if (fres != FR_OK) {
@@ -68,6 +87,8 @@ void start_fileWriting(){
     } else {
         log_printf("f_write error (%i) or partial write.\r\n", fres);
     }
+
+    sd_state = STATE_WRITING;
 }
 
 void end_fileWriting(){
@@ -109,6 +130,12 @@ void SD_status(void) {
 
 
 void write_object(mesure *data) {
+
+	if(sd_state != STATE_WRITING){
+		closeFile();
+		start_fileWriting();
+	}
+
 
 	char *acc = (char*) calloc(40, sizeof(char));
 	sprintf(acc, "\t\"acc\":[%ld, %ld, %ld],\r\n", data->inertialValue.Acc.x, data->inertialValue.Acc.y, data->inertialValue.Acc.z);
@@ -184,12 +211,18 @@ void write_object(mesure *data) {
 
 
 void start_fileReading(){
+	if(sd_state != STATE_CLOSE){
+		closeFile();
+	}
+
     fres = f_open(&fil, file_name, FA_READ);
     if (fres != FR_OK) {
         log_printf("f_open error (%i)\r\n", fres);
         Error_Handler();
         return;
     }
+
+    sd_state = STATE_READING;
 }
 
 void end_fileReading(){
