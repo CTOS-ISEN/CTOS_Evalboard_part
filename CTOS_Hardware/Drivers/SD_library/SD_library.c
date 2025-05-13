@@ -72,9 +72,9 @@ void start_fileWriting(){
 
 void end_fileWriting(){
     //end the json tab
-    char *endBuf = "{END}]\r\n";
+    char *endBuf = "{\"END\":0}]\r\n";
     UINT bytesWritten;
-    fres = f_write(&fil, endBuf, 8, &bytesWritten);
+    fres = f_write(&fil, endBuf, 12, &bytesWritten);
     if (fres == FR_OK) {
         log_printf("Wrote %u bytes to '%s'.\r\n", bytesWritten, file_name);
     } else {
@@ -136,12 +136,12 @@ void write_object(mesure *data) {
 	sprintf(roll, "\t\"roll\":%.2f,\r\n", data->inertialValue.roll);
 
 
-	char *zn1 = (char*) calloc(50, sizeof(char));
-	sprintf(zn1, "\t\"zone1\":[%ld, %ld, %ld, %ld]\r\n",  data->distance.ZoneResult[0].Distance[0],  data->distance.ZoneResult[0].Distance[1],  data->distance.ZoneResult[0].Distance[2],  data->distance.ZoneResult[0].Distance[3]);
+	char *zn1 = (char*) calloc(51, sizeof(char));
+	sprintf(zn1, "\t\"zone1\":[%ld, %ld, %ld, %ld],\r\n",  data->distance.ZoneResult[0].Distance[0],  data->distance.ZoneResult[0].Distance[1],  data->distance.ZoneResult[0].Distance[2],  data->distance.ZoneResult[0].Distance[3]);
 
 
-	char *zn2 = (char*) calloc(50, sizeof(char));
-	sprintf(zn2, "\t\"zone2\":[%ld, %ld, %ld, %ld]\r\n",  data->distance.ZoneResult[1].Distance[0],  data->distance.ZoneResult[1].Distance[1],  data->distance.ZoneResult[1].Distance[2],  data->distance.ZoneResult[1].Distance[3]);
+	char *zn2 = (char*) calloc(51, sizeof(char));
+	sprintf(zn2, "\t\"zone2\":[%ld, %ld, %ld, %ld],\r\n",  data->distance.ZoneResult[1].Distance[0],  data->distance.ZoneResult[1].Distance[1],  data->distance.ZoneResult[1].Distance[2],  data->distance.ZoneResult[1].Distance[3]);
 
 
 
@@ -156,7 +156,7 @@ void write_object(mesure *data) {
 
     // Create a buffer to store the human-readable data
 	//strcat automatically trim empty space
-    char *buffer = (char*) calloc(350, sizeof(char));
+    char *buffer = (char*) calloc(352, sizeof(char));
     strcat(buffer, "{\r\n");
     strcat(buffer, acc);
     strcat(buffer, quat);
