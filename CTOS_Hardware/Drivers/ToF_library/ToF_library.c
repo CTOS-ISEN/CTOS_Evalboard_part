@@ -84,8 +84,9 @@ void ToF_init(void){
 void ToF_acquire_data(RANGING_SENSOR_Result_t* result) {
 
 	status = CUSTOM_RANGING_SENSOR_GetDistance(CUSTOM_VL53L4CX, result);
+
 	if(status != BSP_ERROR_NONE){
-		Error_Handler();
+		log_printf("oh mince\r\n");
 	}
 }
 
